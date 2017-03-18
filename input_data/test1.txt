@@ -1,0 +1,2 @@
+{"user1": {"files":["aaa", "bbb"]},
+ "user2": {"dirs" : ["./my_directory/"]}}

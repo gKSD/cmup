@@ -1,0 +1,2 @@
+{"user1": {"files":["input_data/m2.wav", "input_data/m1.wav"], "dirs": ["./input_data/test_dir1/darkwave", "./input_data/test_dir1/deep_house"]},
+ "user2": {"files" : ["input_data/m3.wav"]}}
