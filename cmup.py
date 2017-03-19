@@ -25,9 +25,9 @@ storage = Storage()
 def loadDataProcess_impl(input_data, ids):
     loader = Loader(storage)
     loader.load(input_data, ids)
-    #loader.printData()
-    #loader.extractFeatures()
-    loader.fingerprint("./input_data/m1.wav")
+    loader.printData()
+    loader.extractFeatures()
+    #loader.fingerprint("./input_data/m1.wav")
     loader.saveData()
 
 def loadDataProcess(data, file_name, ids):

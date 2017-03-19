@@ -21,6 +21,8 @@ from scipy.signal import lfilter, hamming
 #from scikits.talkbox import lpc
 import librosa
 
+import warnings
+
 eps = 0.00000001
 
 """ Time-domain audio features """
@@ -966,34 +968,48 @@ def dirsWavFeatureExtractionExtensionImpl(allMtFeatures, realFileNames, dirName,
         print "Analyzing file {0:d} of {1:d}: {2:s}".format(i+1, len(wavFilesList), wavFile.encode('utf-8'))
         if os.stat(wavFile).st_size == 0:
             print "   (EMPTY FILE -- SKIPPING)"
-            continue        
-        [Fs, x] = audioBasicIO.readAudioFile(wavFile)            # read file                
-        t1 = time.clock()        
-        x = audioBasicIO.stereo2mono(x)                          # convert stereo to mono                
-        if x.shape[0]<float(Fs)/10:
-            print "  (AUDIO FILE TOO SMALL - SKIPPING)"
             continue
-        if computeBEAT:                                          # mid-term feature extraction for current file
-            [MidTermFeatures, stFeatures] = mtFeatureExtraction(x, Fs, round(mtWin * Fs), round(mtStep * Fs), round(Fs * stWin), round(Fs * stStep))
-            [beat, beatConf] = beatExtraction(stFeatures, stStep)
-        else:
-            [MidTermFeatures, _] = mtFeatureExtraction(x, Fs, round(mtWin * Fs), round(mtStep * Fs), round(Fs * stWin), round(Fs * stStep))
 
-        MidTermFeatures = numpy.transpose(MidTermFeatures)
-        MidTermFeatures = MidTermFeatures.mean(axis=0)         # long term averaging of mid-term statistics
-        if computeBEAT:
-            MidTermFeatures = numpy.append(MidTermFeatures, beat)
-            MidTermFeatures = numpy.append(MidTermFeatures, beatConf)
-        if len(allMtFeatures) == 0:                              # append feature vector
-            allMtFeatures = MidTermFeatures
-        else:
-            allMtFeatures = numpy.vstack((allMtFeatures, MidTermFeatures))
-        realFileNames.append(wavFile)
-        t2 = time.clock()
-        duration = float(len(x)) / Fs
-        processingTimes.append((t2 - t1)) # / duration)
+        t1 = time.clock()
+
+        with warnings.catch_warnings():
+            warnings.filterwarnings('error')
+            try:
+
+                [Fs, x] = audioBasicIO.readAudioFile(wavFile)            # read file                
+                x = audioBasicIO.stereo2mono(x)                          # convert stereo to mono                
+                if x.shape[0]<float(Fs)/10:
+                    print "  (AUDIO FILE TOO SMALL - SKIPPING)"
+                    continue
+                if computeBEAT:                                          # mid-term feature extraction for current file
+                    [MidTermFeatures, stFeatures] = mtFeatureExtraction(x, Fs, round(mtWin * Fs), round(mtStep * Fs), round(Fs * stWin), round(Fs * stStep))
+                    [beat, beatConf] = beatExtraction(stFeatures, stStep)
+                else:
+                    [MidTermFeatures, _] = mtFeatureExtraction(x, Fs, round(mtWin * Fs), round(mtStep * Fs), round(Fs * stWin), round(Fs * stStep))
+
+                MidTermFeatures = numpy.transpose(MidTermFeatures)
+                MidTermFeatures = MidTermFeatures.mean(axis=0)         # long term averaging of mid-term statistics
+                if computeBEAT:
+                    MidTermFeatures = numpy.append(MidTermFeatures, beat)
+                    MidTermFeatures = numpy.append(MidTermFeatures, beatConf)
+                if len(allMtFeatures) == 0:                              # append feature vector
+                    allMtFeatures = MidTermFeatures
+                else:
+                    allMtFeatures = numpy.vstack((allMtFeatures, MidTermFeatures))
+                realFileNames.append(wavFile)
+            except Warning as e:
+                print '\033[1;33m[AUDIO_FEATURES_EXCTRACTING] Something wrong happened, SKIP [file: ' + wavFile + ']\033[0;0m'
+
+            t2 = time.clock()
+            try:
+                duration = float(len(x)) / Fs
+                processingTimes.append((t2 - t1)) # / duration
+            except:
+                pass
+
+
     if len(processingTimes) > 0:
-        print "Feature extraction complexity ratio: {0:.1f} x realtime".format((1.0 / numpy.mean(numpy.array(processingTimes))))
+        print "Feature extraction mean processing time: {0:.1f} ".format(numpy.mean(numpy.array(processingTimes)))
     print "KSD allMtFeatures.shape => "
     print allMtFeatures.shape
     return (allMtFeatures, realFileNames)
@@ -1011,12 +1027,19 @@ def dirsWavFeatureExtractionExtension(resultFeatures, resultFileNames, dirNames,
     '''
 
     for i, d in enumerate(dirNames):
-        [resultFeatures, resultFileNames] = dirsWavFeatureExtractionExtensionImpl(resultFeatures,
-                                                                                  resultFileNames,
-                                                                                  d,
-                                                                                  mtWin,
-                                                                                  mtStep,
-                                                                                  stWin,
-                                                                                  stStep,
-                                                                                  computeBEAT=computeBEAT)
+        #filtering warnings
+        with warnings.catch_warnings():
+            warnings.filterwarnings('error')
+            try:
+                [resultFeatures, resultFileNames] = dirsWavFeatureExtractionExtensionImpl(resultFeatures,
+                                                                                          resultFileNames,
+                                                                                          d,
+                                                                                          mtWin,
+                                                                                          mtStep,
+                                                                                          stWin,
+                                                                                          stStep,
+                                                                                          computeBEAT=computeBEAT)
+            except Warning as e:
+                print '\033[1;33m[AUDIO_FEATURES_EXCTRACTING] Something wrong happened, SKIP [' +d+']\033[0;0m'
+
     return (resultFeatures, resultFileNames)

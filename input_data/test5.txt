@@ -1,0 +1,1 @@
+{"user1": {"dirs":["input_data/test_dir1/qqq"]}}

@@ -10,6 +10,13 @@ from storage import Storage
 from config import Config
 from lib.fingerprint.dejavu.dejavu import decoder as fingerprintDecoder
 from lib.fingerprint.dejavu.dejavu import fingerprint as fingerprint
+
+class NumpyAwareJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, numpy.ndarray) and obj.ndim == 1:
+            return obj.tolist()
+        return json.JSONEncoder.default(self, obj)
+
 class Loader:
     def __init__(self, storage):
         self.__storage = storage
@@ -107,6 +114,26 @@ class Loader:
                     fileNames.append(file_name)
 
                 self._features[user_id] = [features, fileNames]
+
+            #print "features"
+            #print features
+            #print "fileNames ALL =>"
+            #print fileNames
+            res_file_name = str(user_id) + '_res_file_name.txt'
+            #print res_file_name
+            f = open(res_file_name, 'w')
+            for i in range(0, len(fileNames)):
+                #print "fileName => "
+                #print fileNames[i]
+                #print "features.item(i)"
+                #print features[i]
+                j=json.dumps({fileNames[i]:features[i]},cls=NumpyAwareJSONEncoder)
+                #print "string for file:"
+                #print fileNames[i] + "==>" + numpy.array_str(features[i])
+                f.write(j)
+                f.write("\n")
+                #f.write(fileNames[i] + "==>" + numpy.array_str(features[i]))
+            f.close()
 
 
     def fingerprint(self, filename, limit=None, song_name=None):
