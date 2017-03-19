@@ -1043,3 +1043,20 @@ def dirsWavFeatureExtractionExtension(resultFeatures, resultFileNames, dirNames,
                 print '\033[1;33m[AUDIO_FEATURES_EXCTRACTING] Something wrong happened, SKIP [' +d+']\033[0;0m'
 
     return (resultFeatures, resultFileNames)
+
+
+def stSpectralFlatness(X):
+    """Computes spectral flatness"""
+    geoMean = numpy.exp(numpy.sum(numpy.log((X + eps)**2))/len(X))
+    arithMean = numpy.sum(X**2)/len(X)
+    if arithMean == 0:
+        return 0
+    return geoMean/arithMean
+
+def stSpectralCrestFactor(X):
+    """Computes spectral Crest factor"""
+    peak = max(X)
+    rms = numpy.sqrt(numpy.sum(X**2)/len(X))
+    if rms == 0:
+        return 0
+    return peak/rms
