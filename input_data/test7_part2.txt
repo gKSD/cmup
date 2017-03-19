@@ -1,0 +1,4 @@
+{
+ "user3": {"dirs": ["../../Program/Relax_all/"]},
+ "user4": {"dirs": ["../../Program/Sad_all/"]}
+}
