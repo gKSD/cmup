@@ -17,6 +17,8 @@ from config import Config
 from audio_feature_extracter import AudioFeatureExtracter
 from loader import Loader
 from storage import Storage
+from emotion_classifier import EmotionClassifier 
+
 
 storage = Storage()
 
@@ -49,6 +51,10 @@ def runClassifierProcess(ids):
     pass
 
 def getResultProcess():
+    pass
+
+def trainEmotionClassifier(file, data):
+    ec = EmotionClassifier(storage)
     pass
 
 def convertDirMp3ToWavProcess(directory, sample_rate, _channels, need_remove_original = False, use_mp3_tags = False):
@@ -134,6 +140,10 @@ def parse_arguments():
     dirWavChangeFs.add_argument("-s", "--samplerate", help = "sampling rate")
     dirWavChangeFs.add_argument("-c", "--channels", help = "number of channels in new wav file")
 
+    trainEmotionClassifier = tasks.add_parser("trainEmotionClassifier", help = "trains Music Emotion Classifier")
+    group = trainEmotionClassifier.add_mutually_exclusive_group(required=True)
+    group.add_argument("-f", "--file", help="Path to file with input data in JSON format")
+    group.add_argument("-d", "--data", help="Input data in JSON format")
 
     getResult = tasks.add_parser("getResult", help="returns classifier results")
     #TODO: print result - plots etc
@@ -159,3 +169,5 @@ if __name__ == "__main__":
         convertDirMp3ToWavProcess(args.dir, args.samplerate, args.channels, args.remove, args.usemp3tags)
     elif args.task == "dirWavChangeFs":
         dirWavChangeFs(args.dir, args.samplerate, args.channels)
+    elif args.task == "trainEmotionClassifier":
+        trainEmotionClassifier(args.file, args.data)

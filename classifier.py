@@ -7,34 +7,34 @@ from loader import Loader
 from config import Config
 from storage import Storage
 
-class classifier:
+class Classifier:
     def __init__(self, storage):
-        self.__storage = storage
-        self.__loader = Loader(self.__storage)
+        self._storage = storage
+        self._loader = Loader(self._storage)
 
-        self.__resultFeaturesDirectory = config.classifierAudioFeaturesResultDirectory
+        self._resultFeaturesDirectory = Config.get_instance().classifierAudioFeaturesResultDirectory
 
-    def __loadDataProcess_impl__(self, input_data):
+    def _loadDataProcess_impl_(self, input_data):
         config = Config.get_instance()
 
-        self.__loader.load(input_data)
-        self.__loader.printData()
-        self.__loader.extractFeaturesEssentia(self.__resultFeaturesDirectory)
+        self._loader.load(input_data)
+        self._loader.printData()
+        self._loader.extractFeaturesEssentia(self._resultFeaturesDirectory)
 
-    def __loadDataProcess__(self, data, file_name):
+    def _loadDataProcess_(self, data, file_name):
         if data:
-            self.__loadDataProcess_impl__(data)
+            self._loadDataProcess_impl_(data)
         if file_name:
             data = ''
             with open(file_name, 'r') as datafile:
                 data = datafile.read().replace('\n', '')
-            self.__loadDataProcess_impl__(data)
+            self._loadDataProcess_impl_(data)
 
     def loadData(self, data):
-        self.__loadDataProcess__(self, data, None)
+        self._loadDataProcess_(self, data, None)
 
     def loadDataFromFile(self, file_name):
-        self.__loadDataProcess__(self, None, file_name)
+        self._loadDataProcess_(self, None, file_name)
 
-    def __readFeaturesToMem(self):
+    def _readFeaturesToMem(self):
         pass
