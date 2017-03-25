@@ -136,6 +136,36 @@ class Loader:
             f.close()
 
 
+    def extractFeaturesEssentia(self):
+
+        if not self.__data:
+            raise Exception("Errror: input data is empty or error occured while data parsing")
+
+        user_ids = self.__data.keys()
+
+        print "[LOADER] essentia feature exctraction for IDs: "+ ', '.join(user_ids)
+
+        config = Config.get_instance()
+
+        for user_id in user_ids:
+            print "[LOADER] feature exctraction for ID: " + user_id
+
+            features = numpy.array([])
+            fileNames = []
+
+            if "dirs" in self.__data[user_id]:
+
+                dir_names = self.__data[user_id]["dirs"]
+
+                print "[LOADER] feature exctraction for dirs: '" + ', '.join(dir_names) + "'"
+
+                for dir_name in dir_names:
+                    try:
+                        self._audioFeatureExtracter.processDirEssentia(dir_name, False)
+                    except Exception as e:
+                        print "[LOADER] error while processing dirs: " + ', '.join(dir_names) + ", skip [Error:" + str(e) +"]"
+
+    
     def fingerprint(self, filename, limit=None, song_name=None):
         print "[LOADER] fingerprinting filename: " + filename
         try:

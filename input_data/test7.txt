@@ -1,3 +1,4 @@
-{"user1": {"dirs": ["../../all_dataset_for_counting/4_dataset_audio/Angry_all/"]},
- "user2": {"dirs": ["../../all_dataset_for_counting/4_dataset_audio/Happy_all/"]}
- }
+{
+    "user1": {"dirs": ["../../all_dataset_for_counting/4_dataset_audio/Angry_all/"]},
+    "user2": {"dirs": ["../../all_dataset_for_counting/4_dataset_audio/Happy_all/"]}
+}

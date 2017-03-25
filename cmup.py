@@ -26,7 +26,7 @@ def loadDataProcess_impl(input_data, ids):
     loader = Loader(storage)
     loader.load(input_data, ids)
     loader.printData()
-    loader.extractFeatures()
+    loader.extractFeaturesEssentia()
     #loader.fingerprint("./input_data/m1.wav")
     loader.saveData()
 
@@ -74,6 +74,16 @@ def convertDirMp3ToWavProcess(directory, sample_rate, _channels, need_remove_ori
     except:
         raise
 
+def dirWavChangeFs(directory, sample_rate, _channels):
+    config = Config()
+    sampleRate = sample_rate if sample_rate else config.sampleRate
+    channels = _channels if _channels else config.channels
+    try:
+        AudioFeatureExtracter.dirWavChangeFs(directory, sampleRate, channels)
+    except ValueError, e:
+        print "[ERROR] exception occured while converting wav file to new wav file [" + str(e) + "]"
+        raise
+
 def parse_arguments():
     parser = argparse.ArgumentParser(description="A demonstration script for pyAudioAnalysis library")
     tasks = parser.add_subparsers(
@@ -119,6 +129,12 @@ def parse_arguments():
     convertDirMp3ToWav.add_argument("-s", "--samplerate", help = "sampling rate")
     convertDirMp3ToWav.add_argument("-c", "--channels", help = "number of channels in new wav file")
 
+    dirWavChangeFs = tasks.add_parser("dirWavChangeFs", help="convert all .wav files in specified directory to new .wav files with specified parameters")
+    dirWavChangeFs.add_argument("-d", "--dir", required=True, help="directory with music files")
+    dirWavChangeFs.add_argument("-s", "--samplerate", help = "sampling rate")
+    dirWavChangeFs.add_argument("-c", "--channels", help = "number of channels in new wav file")
+
+
     getResult = tasks.add_parser("getResult", help="returns classifier results")
     #TODO: print result - plots etc
     #TODO: return result in JSON (save to file or somehow)
@@ -141,3 +157,5 @@ if __name__ == "__main__":
         getResultProcess()
     elif args.task == "convertDirMp3ToWav":
         convertDirMp3ToWavProcess(args.dir, args.samplerate, args.channels, args.remove, args.usemp3tags)
+    elif args.task == "dirWavChangeFs":
+        dirWavChangeFs(args.dir, args.samplerate, args.channels)

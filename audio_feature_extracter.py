@@ -2,6 +2,11 @@
 # -*- coding: UTF-8 -*-
 import re
 import os
+import platform
+import glob
+import shutil
+import subprocess
+import re
 
 from lib.audio_feature_extraction import audioFeatureExtraction as aF
 from lib.audio_feature_extraction import audioTrainTest as aT
@@ -57,9 +62,65 @@ class AudioFeatureExtracter:
                                                                                  shortTermStep,
                                                                                  computeBeat)
         return [resultFeatures, resultFileNames]
-
         #return [features, classNames, fileNames]
 
+
+    def processDirEssentia(self, dir_name, need_delete_result_dir):
+
+        print "[AUDIO_FEATURE_EXTRACTOR] processing dir: " + dir_name
+
+        TMP = "tmp_essentia"
+        if not os.path.exists(TMP):
+            os.makedirs(TMP)
+        result_directory = TMP + '/' + re.sub('\.\./', '', dir_name)
+        if not os.path.exists(result_directory):
+            os.makedirs(result_directory)
+        try:
+            if platform.system() == 'Darwin':
+
+                print "[AUDIO_FEATURE_EXCTRACTOR] Darwin os is not supported for now"
+
+                raise Exception("Darwin os is not supported for now !!")
+
+            elif platform.system() == 'Linux':
+                types = ('*.wav', '*.aif',  '*.aiff', '*.mp3','*.au')
+
+                wavFilesList = []
+
+                for files in types:
+                    wavFilesList.extend(glob.glob(os.path.join(dir_name, files)))
+
+                file_count = 0
+                files_total = len(wavFilesList)
+                for wavFile in wavFilesList:
+                    try:
+                        print "\033[1;36m[AUDIO_FEATURE_EXCTRACTOR] Analyzing file {0:d} of {1:d}: {2:s}\033[0;0m".format(file_count + 1, files_total, wavFile.encode('utf-8', errors='ignore'))
+                        file_count += 1
+                        file_name = os.path.basename(wavFile) # extract file name from full path
+                        clean_file_name = os.path.splitext(file_name)[0] # gets file name without extension
+                        result_file_name = result_directory + "/" + clean_file_name + "_features.json"
+                        result_file_name = re.sub('[ -\(\)\']', '', result_file_name)
+
+                        print "[AUDIO_FEATURE_EXCTRACTOR] result file name: " + result_file_name.encode('utf-8', errors='ignore')
+
+                        command = "./lib/essentia_linux/streaming_extractor_music \"" + wavFile + "\" \"" + result_file_name + "\""
+                        print "[AUDIO_FEATURE_EXCTRACTOR] command: " + command.encode('utf-8', errors='ignore')
+                        os.system(command.encode('utf-8', errors='ignore'))
+                        #exitcode = subprocess.call([command])
+
+                    except ValueError, e:
+                        print "[ERROR] exception occured while processing file, skip [" + str(e) + "]"
+
+            else:
+                raise Exception("Unsupported OS!!")
+
+        except:
+            if need_delete_result_dir and os.path.exists(TMP):
+                shutil.rmtree(TMP)
+            raise
+        else:
+            if need_delete_result_dir and os.path.exists(TMP):
+                shutil.rmtree(TMP)
 
     def normalizeFeatures(self, features):
         # features -> list of feature matrices
