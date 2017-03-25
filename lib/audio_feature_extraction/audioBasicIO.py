@@ -50,7 +50,7 @@ def convertFsDirWavToWav(dirName, Fs, nC):
      - Fs:          the sampling rate of the generated WAV files
      - nC:          the number of channesl of the generated WAV files
     '''
-    print "[AUDIO_BASIC_IO] converting dir: '" + dirName +"' wav to wav (using mp3 tags as name: " + "true" if useMp3TagsAsName else "false" + ", Fs:" + str(Fs) + ", number of channels: " + str(nC) + ")"
+    print "[AUDIO_BASIC_IO] converting dir: '" + dirName +"' wav to wav (Fs:" + str(Fs) + ", number of channels: " + str(nC) + ")"
 
     types = (dirName+os.sep+'*.wav',) # the tuple of file types
     filesToProcess = []

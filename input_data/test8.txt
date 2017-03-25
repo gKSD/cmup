@@ -1,0 +1,4 @@
+{
+    "user1": {"dirs": ["./input_data/test_dir1/darkwave"]},
+    "user2": {"dirs": ["./input_data/test_dir1/darkwave", "./input_data/test_dir1/deep_house"]}
+}
