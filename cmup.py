@@ -26,7 +26,7 @@ def loadDataProcess_impl(input_data, ids):
     loader = Loader(storage)
     loader.load(input_data, ids)
     loader.printData()
-    loader.extractFeaturesEssentia()
+    loader.extractFeaturesEssentia("to_delete")
     #loader.fingerprint("./input_data/m1.wav")
     loader.saveData()
 

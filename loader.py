@@ -136,7 +136,7 @@ class Loader:
             f.close()
 
 
-    def extractFeaturesEssentia(self):
+    def extractFeaturesEssentia(self, result_directory = None):
 
         if not self.__data:
             raise Exception("Errror: input data is empty or error occured while data parsing")
@@ -147,8 +147,12 @@ class Loader:
 
         config = Config.get_instance()
 
+        res_dir = result_directory if result_directory else config.audioFeaturesResultDirectory
+
         for user_id in user_ids:
-            print "[LOADER] feature exctraction for ID: " + user_id
+            print "[LOADER] essentia feature exctraction for ID: " + user_id
+
+            user_res_dir = res_dir + "/" + user_id
 
             features = numpy.array([])
             fileNames = []
@@ -157,13 +161,28 @@ class Loader:
 
                 dir_names = self.__data[user_id]["dirs"]
 
-                print "[LOADER] feature exctraction for dirs: '" + ', '.join(dir_names) + "'"
+                print "[LOADER] essentia feature exctraction for dirs: '" + ', '.join(dir_names) + "'"
 
                 for dir_name in dir_names:
                     try:
-                        self._audioFeatureExtracter.processDirEssentia(dir_name, False)
+                        self._audioFeatureExtracter.processDirEssentia(dir_name, user_res_dir)
                     except Exception as e:
-                        print "[LOADER] error while processing dirs: " + ', '.join(dir_names) + ", skip [Error:" + str(e) +"]"
+                        print "[LOADER] essentia error while processing dir: " + ', '.join(dir_name) + ", skip [Error:" + str(e) +"]"
+                        continue
+
+            if "files" in self.__data[user_id]:
+                print "[LOADER] essentia feature extraction for files: " + ', '.join(self.__data[user_id]["files"])
+
+                files = self.__data[user_id]["files"]
+
+                for i, file_name in enumerate(files):
+                    print "[LOADER] essentia analyzing file {0:d} of {1:d}: {2:s}".format(i + 1, len(files), file_name.encode('utf-8'))
+
+                    try:
+                        self._audioFeatureExtracter.processFileEssentia(file_name, user_res_dir)
+                    except Exception as e:
+                        print "[LOADER] essentia error while processing file: " + file_name + ", skip [Error:" + str(e) +"]"
+                        continue
 
     
     def fingerprint(self, filename, limit=None, song_name=None):

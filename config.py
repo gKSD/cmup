@@ -18,6 +18,9 @@ class Config(object):
         self.shortTermSize = 0.050
         self.shortTermStep = 0.050
         self.computeBeat = True
+        self.audioFeaturesResultDirectory = "user_calculated_essentia_features"
+
+        self.classifierAudioFeaturesResultDirectory = "calculated_essentia_features"
 
         print "[CONFIG] reading config: '" + self.CONFIG_PATH + "'"
 
@@ -45,6 +48,14 @@ class Config(object):
                     self.shortTermStep = float(audiofeatureExtraction["shortTermStep"])
                 if audiofeatureExtraction.get("computeBeat"):
                     self.computeBeat = audiofeatureExtraction.getboolean("computeBeat")
+                if audiofeatureExtraction.get("audioFeaturesResultDirectory"):
+                    self.audioFeaturesResultDirectory = audiofeatureExtraction["audioFeaturesResultDirectory"]
+
+            elif section == "Classifier":
+                classifier = self.config["Classifier"]
+
+                if classifier.get("classifierAudioFeaturesResultDirectory"):
+                    self.classifierAudioFeaturesResultDirectory = classifier["classifierAudioFeaturesResultDirectory"]
 
     @classmethod
     def get_instance(cls):
