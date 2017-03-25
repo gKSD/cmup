@@ -76,43 +76,41 @@ class AudioFeatureExtracter:
         if not os.path.exists(result_directory):
             os.makedirs(result_directory)
         try:
+            extractor = ''
             if platform.system() == 'Darwin':
-
-                print "[AUDIO_FEATURE_EXCTRACTOR] Darwin os is not supported for now"
-
-                raise Exception("Darwin os is not supported for now !!")
-
+                extractor = "./lib/essentia_osx/streaming_extractor_music"
             elif platform.system() == 'Linux':
-                types = ('*.wav', '*.aif',  '*.aiff', '*.mp3','*.au')
-
-                wavFilesList = []
-
-                for files in types:
-                    wavFilesList.extend(glob.glob(os.path.join(dir_name, files)))
-
-                file_count = 0
-                files_total = len(wavFilesList)
-                for wavFile in wavFilesList:
-                    try:
-                        print "\033[1;36m[AUDIO_FEATURE_EXCTRACTOR] Analyzing file {0:d} of {1:d}: {2:s}\033[0;0m".format(file_count + 1, files_total, wavFile.encode('utf-8', errors='ignore'))
-                        file_count += 1
-                        file_name = os.path.basename(wavFile) # extract file name from full path
-                        clean_file_name = os.path.splitext(file_name)[0] # gets file name without extension
-                        result_file_name = result_directory + "/" + clean_file_name + "_features.json"
-                        result_file_name = re.sub('[ -\(\)\']', '', result_file_name)
-
-                        print "[AUDIO_FEATURE_EXCTRACTOR] result file name: " + result_file_name.encode('utf-8', errors='ignore')
-
-                        command = "./lib/essentia_linux/streaming_extractor_music \"" + wavFile + "\" \"" + result_file_name + "\""
-                        print "[AUDIO_FEATURE_EXCTRACTOR] command: " + command.encode('utf-8', errors='ignore')
-                        os.system(command.encode('utf-8', errors='ignore'))
-                        #exitcode = subprocess.call([command])
-
-                    except ValueError, e:
-                        print "[ERROR] exception occured while processing file, skip [" + str(e) + "]"
-
+                extractor = "./lib/essentia_linux/streaming_extractor_music"
             else:
                 raise Exception("Unsupported OS!!")
+
+            types = ('*.wav', '*.aif',  '*.aiff', '*.mp3','*.au')
+
+            wavFilesList = []
+
+            for files in types:
+                wavFilesList.extend(glob.glob(os.path.join(dir_name, files)))
+
+            file_count = 0
+            files_total = len(wavFilesList)
+            for wavFile in wavFilesList:
+                try:
+                    print "\033[1;36m[AUDIO_FEATURE_EXCTRACTOR] Analyzing file {0:d} of {1:d}: {2:s}\033[0;0m".format(file_count + 1, files_total, wavFile.encode('utf-8', errors='ignore'))
+                    file_count += 1
+                    file_name = os.path.basename(wavFile) # extract file name from full path
+                    clean_file_name = os.path.splitext(file_name)[0] # gets file name without extension
+                    result_file_name = result_directory + "/" + clean_file_name + "_features.json"
+                    result_file_name = re.sub('[ -\(\)\']', '', result_file_name)
+
+                    print "[AUDIO_FEATURE_EXCTRACTOR] result file name: " + result_file_name.encode('utf-8', errors='ignore')
+
+                    command = extractor + " \"" + wavFile + "\" \"" + result_file_name + "\""
+                    print "[AUDIO_FEATURE_EXCTRACTOR] command: " + command.encode('utf-8', errors='ignore')
+                    os.system(command.encode('utf-8', errors='ignore'))
+                    #exitcode = subprocess.call([command])
+
+                except ValueError, e:
+                    print "[ERROR] exception occured while processing file, skip [" + str(e) + "]"
 
         except:
             if need_delete_result_dir and os.path.exists(TMP):
