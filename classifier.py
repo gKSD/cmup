@@ -33,6 +33,7 @@ class Classifier:
         self._loader.printData()
         self._loader.extractFeaturesEssentia(self._resultFeaturesDirectory)
 
+
     def _loadDataProcess_(self, data, file_name):
         if data:
             self._loadDataProcess_impl_(data)
@@ -42,14 +43,28 @@ class Classifier:
                 data = datafile.read().replace('\n', '')
             self._loadDataProcess_impl_(data)
 
+
     def loadData(self, data):
+
         self._loadDataProcess_(data, None)
 
+
     def loadDataFromFile(self, file_name):
+
         self._loadDataProcess_(None, file_name)
 
+
     def loadAudioFeaturesToMem(self):
+
         self._loader.readFeaturesToMem()
 
+        self._loader.makeFeatureMatrixAndLabels()
+
+
     def preprocessAudioFeatures(self):
-        pass
+
+        self._loader.runFeatureStandardization()
+
+
+
+

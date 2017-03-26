@@ -3,6 +3,8 @@
 import json
 import re
 from jsonschema import validate
+from sklearn import preprocessing
+from sklearn.preprocessing import PolynomialFeatures
 
 from lib.audio_feature_extraction.audioBasicIO import *
 from audio_feature_extracter import AudioFeatureExtracter
@@ -32,7 +34,11 @@ class Loader:
 
         self._audioFeatureExtracter = AudioFeatureExtracter()
 
-        self._features = {}
+        self._audioFeaturesByIdentifier = {}
+
+        self._featuresMatrix = [] # matrix X n x m (n features, m samples)
+        self._featuresLabels = [] # vector Y m x 1 (m samples)
+        self._featuresMatrixAndLabelsComputed = False
 
         self._resultFeaturesDirectory = result_directory if result_directory else Config.get_instance().classifierAudioFeaturesResultDirectory
 
@@ -43,6 +49,8 @@ class Loader:
         self._validRhythmFeatures = valid_rhythm_features if valid_rhythm_features else "all"
 
         self._validAudioFeatureTypes = valid_audio_features_type if valid_audio_features_type else "all"
+
+        self._featureScaler = None
 
 
     def load(self, data, ids = None):
@@ -134,7 +142,7 @@ class Loader:
                         features = numpy.vstack((features, fileFeatures))
                     fileNames.append(file_name)
 
-                self._features[user_id] = [features, fileNames]
+                self._audioFeaturesByIdentifier[user_id] = [features, fileNames]
 
             # TODO: store file to _self._resultFeaturesDirectory
             res_file_name = str(user_id) + '_res_file_name.txt'
@@ -376,19 +384,177 @@ class Loader:
             print "[LOADER] n features: " + str(labels[label_dir].shape[1])
             print "[LOADER] m samples: " + str(labels[label_dir].shape[0])
 
-        self._features = labels
+        self._audioFeaturesByIdentifier = labels
+
+
+    def __checkFeatures__(self):
+
+        if not self._audioFeaturesByIdentifier:
+            self.readFeaturesToMem()
+
+        if not self._audioFeaturesByIdentifier:
+            raise Exception("[ERROR] empty feature vector!!!")
+
+    def __checkFeatureMatrixAndLables__(self):
+
+        self.__checkFeatures__()
+
+        if not self._featuresMatrixAndLabelsComputed:
+            print "[WARNING] making feature matrix and labels vector from loaded features"
+
+            self._featuresMatrix = []
+            self._featuresLabels = []
+
+            self.makeFeatureMatrixAndLabels()
+
+
+    def makeFeatureMatrixAndLabels(self, needRandomShuffle = False):
+
+        print "[LOADER] making feature matrix and feature labels vector"
+
+        self.__checkFeatures__()
+
+        for identifier in self._audioFeaturesByIdentifier:
+
+            m_samples = self._audioFeaturesByIdentifier[identifier].shape[0]
+
+            if len(self._featuresMatrix) == 0:                              # append feature vector
+                self._featuresMatrix = self._audioFeaturesByIdentifier[identifier]
+            else:
+                self._featuresMatrix = numpy.vstack((self._featuresMatrix, self._audioFeaturesByIdentifier[identifier]))
+
+            self._featuresLabels = numpy.append(self._featuresLabels, numpy.full(m_samples, identifier, dtype='|S2'))
+
+        self._featuresMatrixAndLabelsComputed = True
+
+        print "[LOADER] feature matrix shape: " + str(self._featuresMatrix.shape[0]) + " x " + str(self._featuresMatrix.shape[1])
+        print "[LOADER] feature labels shape: " + str(self._featuresLabels.shape[0])
 
 
     def features(self):
-        return self._features
+
+        self.__checkFeatures__()
+
+        return self._audioFeaturesByIdentifier
 
 
-    def normalizeFeatures(self):
+    def Xmatrix(self):
 
-        if not self._features:
-            self.readFeaturesToMem()
+        self.__checkFeatureMatrixAndLables__()
 
-    
+        return self._featuresMatrix
+
+
+    def Yvector(self):
+
+        self.__checkFeatureMatrixAndLables__()
+
+        return self._featuresLabels
+
+
+    def runFeatureStandardization(self):
+
+        """
+        Standardization of datasets is a common requirement for many machine learning estimators
+        implemented in scikit-learn; they might behave badly if the individual features do not
+        more or less look like standard normally distributed data: Gaussian with zero mean and
+        unit variance.
+
+        In practice we often ignore the shape of the distribution and just transform the data to center
+        it by removing the mean value of each feature, then scale it by dividing non-constant features
+        by their standard deviation.
+
+        For instance, many elements used in the objective function of a learning algorithm
+        (such as the RBF kernel of Support Vector Machines or the l1 and l2 regularizers of linear models)
+        assume that all features are centered around zero and have variance in the same order.
+        If a feature has a variance that is orders of magnitude larger than others, it might dominate
+        the objective function and make the estimator unable to learn from other features correctly as expected.
+
+        Scaled data has zero mean and unit variance:
+        >>> X_scaled = preprocessing.scale(X)
+        >>> X_scaled.mean(axis=0)
+        array([ 0.,  0.,  0.])
+        >>> X_scaled.std(axis=0)
+        array([ 1.,  1.,  1.])
+
+        http://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.scale.html#sklearn.preprocessing.scale
+
+        It is Z-score normalization
+
+        TODO: if your data contains many outliers, scaling using the mean and variance
+        of the data is likely to not work very well. In these cases, you can use
+        robust_scale and RobustScaler as drop-in replacements instead.
+        They use more robust estimates for the center and range of your data.
+        """
+
+        self.__checkFeatureMatrixAndLables__()
+
+        print "[LOADER] perform feature standartization"
+
+        self._featuresMatrix = preprocessing.scale(self._featuresMatrix, copy=False)
+
+    def runFeatureMinMaxNormalization(self):
+
+        """
+        An alternative standardization is scaling features to lie between a given minimum
+        and maximum value, often between zero and one, or so that the maximum absolute value
+        of each feature is scaled to unit size.
+        This can be achieved using MinMaxScaler or MaxAbsScaler, respectively.
+
+        The motivation to use this scaling include robustness to very small standard deviations
+        of features and preserving zero entries in sparse data.
+
+        Formula:
+        X_std = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
+        """
+
+        self.__checkFeatureMatrixAndLables__()
+
+        min_max_scaler = preprocessing.MinMaxScaler()
+
+        self._featuresMatrix = min_max_scaler.fit_transform(self._featuresMatrix, copy=False)
+
+
+    def computeFeatureScaler(self):
+
+        """
+        The preprocessing module further provides a utility class StandardScaler
+        that implements the Transformer API to compute the mean and standard deviation
+        on a training set so as to be able to later reapply the same transformation
+        on the testing set.
+        This class is hence suitable for use in the early steps of a sklearn.pipeline.Pipeline.
+
+        The scaler instance can then be used on new data to transform it the same way it did on the training set:
+        >>> scaler.transform([[-1.,  1., 0.]])
+        array([[-2.44...,  1.22..., -0.26...]])
+        """
+
+        self.__checkFeatureMatrixAndLables__()
+
+        self._featureScaler = preprocessing.StandardScaler().fit(self._featuresMatrix)
+
+    def generatePolynomialFeatures (self):
+
+        """
+        Transforming features from (X1, X2) to (1, X1, X2, X1^2, X2^2, X1*X2)
+        """
+        #TODO
+        self.__checkFeatureMatrixAndLables__()
+
+        poly = PolynomialFeatures(2)
+
+        self._featuresMatrix = poly.fit_transform(self._featuresMatrix)
+
+
+    def labelEncoding(self):
+        """
+        from sklearn.preprocessing import LabelEncoder
+        >> le=LabelEncoder()
+        """
+        #TODO
+        pass
+
+
     def fingerprint(self, filename, limit=None, song_name=None):
         print "[LOADER] fingerprinting filename: " + filename
         try:
