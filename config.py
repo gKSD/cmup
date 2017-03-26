@@ -22,10 +22,10 @@ class Config(object):
 
         self.classifierAudioFeaturesResultDirectory = "calculated_essentia_features"
 
-        self.emotionClassifierLowlevelAudioFeatures = "all"
-        self.emotionClassifierTonalAudioFeatures = "all"
-        self.emotionClassifierRhythmAudioFeatures = "all"
-        self.emotionClassifierAudioFeatureTypes = "all"
+        self.emotionClassifierLowlevelAudioFeatures = ""
+        self.emotionClassifierTonalAudioFeatures = ""
+        self.emotionClassifierRhythmAudioFeatures = ""
+        self.emotionClassifierAudioFeatureTypes = ""
 
         print "[CONFIG] reading config: '" + self.CONFIG_PATH + "'"
 

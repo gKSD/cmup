@@ -154,7 +154,7 @@ class Classifier:
 
         for label_dir in label_directories:
 
-            #print "[DEBUG] label_dir: " + label_dir
+            print "\033[1;36m[CLASSIFIER] label: " + label_dir + "\033[0;0m"
 
             #labels[label_dir] = []
             label_features = numpy.array([])
@@ -207,5 +207,5 @@ class Classifier:
 
             labels[label_dir] = label_features
 
-            print "labels[label_dir].size => " + str(labels[label_dir].size)
-
+            print "[CLASSIFIER] n samples: " + str(labels[label_dir].shape[0])
+            print "[CLASSIFIER] n features: " + str(labels[label_dir].shape[1])
