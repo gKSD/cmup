@@ -22,6 +22,11 @@ class Config(object):
 
         self.classifierAudioFeaturesResultDirectory = "calculated_essentia_features"
 
+        self.emotionClassifierLowlevelAudioFeatures = "all"
+        self.emotionClassifierTonalAudioFeatures = "all"
+        self.emotionClassifierRhythmAudioFeatures = "all"
+        self.emotionClassifierAudioFeatureTypes = "all"
+
         print "[CONFIG] reading config: '" + self.CONFIG_PATH + "'"
 
         self.config = configparser.ConfigParser()
@@ -57,13 +62,21 @@ class Config(object):
                 if classifier.get("classifierAudioFeaturesResultDirectory"):
                     self.classifierAudioFeaturesResultDirectory = classifier["classifierAudioFeaturesResultDirectory"]
 
-    @classmethod
-    def get_instance(cls):
-        if cls.obj is None:
-            cls.obj = Config()
-        return cls.obj
+            elif section == "EmotionClassifier":
+                emotionClassifier = self.config["EmotionClassifier"]
+
+                if emotionClassifier.get("emotionClassifierLowlevelAudioFeatures"):
+                    self.emotionClassifierLowlevelAudioFeatures = emotionClassifier["emotionClassifierLowlevelAudioFeatures"].split('\n')
+                if emotionClassifier.get("emotionClassifierTonalAudioFeatures"):
+                    self.emotionClassifierTonalAudioFeatures = emotionClassifier["emotionClassifierTonalAudioFeatures"].split('\n')
+                if emotionClassifier.get("emotionClassifierRhythmAudioFeatures"):
+                    self.emotionClassifierRhythmAudioFeatures = emotionClassifier["emotionClassifierRhythmAudioFeatures"].split('\n')
+                if emotionClassifier.get("emotionClassifierAudioFeatureTypes"):
+                    self.emotionClassifierAudioFeatureTypes = emotionClassifier["emotionClassifierAudioFeatureTypes"].split('\n')
+
 
     @classmethod
-    def custom_method(cls):
-        obj = cls.get_instance()
-        # Custom Code here
+    def get_instance(self):
+        if self.obj is None:
+            self.obj = Config()
+        return self.obj

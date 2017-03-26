@@ -53,12 +53,23 @@ def runClassifierProcess(ids):
 def getResultProcess():
     pass
 
-def trainEmotionClassifier(file, data):
-    ec = EmotionClassifier(storage)
-    pass
+def trainEmotionClassifier(file, data, load):
+    config = Config.get_instance()
+
+    tmp = "calculated_essentia_features/all_dataset_for_counting/4_dataset_audio"
+
+    ec = EmotionClassifier(storage, tmp)
+
+    if file:
+        ec.loadDataFromFile(file)
+    elif data:
+        ec.loadData(data)
+
+    ec.readFeaturesToMem()
+
 
 def convertDirMp3ToWavProcess(directory, sample_rate, _channels, need_remove_original = False, use_mp3_tags = False):
-    config = Config()
+    config = Config.get_instance()
     sampleRate = sample_rate if sample_rate else config.sampleRate
     channels = _channels if _channels else config.channels
     try:
@@ -81,7 +92,7 @@ def convertDirMp3ToWavProcess(directory, sample_rate, _channels, need_remove_ori
         raise
 
 def dirWavChangeFs(directory, sample_rate, _channels):
-    config = Config()
+    config = Config.get_instance()
     sampleRate = sample_rate if sample_rate else config.sampleRate
     channels = _channels if _channels else config.channels
     try:
@@ -144,6 +155,7 @@ def parse_arguments():
     group = trainEmotionClassifier.add_mutually_exclusive_group(required=True)
     group.add_argument("-f", "--file", help="Path to file with input data in JSON format")
     group.add_argument("-d", "--data", help="Input data in JSON format")
+    group.add_argument("-l", "--load", action="store_true", help="Load calculated audio features")
 
     getResult = tasks.add_parser("getResult", help="returns classifier results")
     #TODO: print result - plots etc
@@ -170,4 +182,4 @@ if __name__ == "__main__":
     elif args.task == "dirWavChangeFs":
         dirWavChangeFs(args.dir, args.samplerate, args.channels)
     elif args.task == "trainEmotionClassifier":
-        trainEmotionClassifier(args.file, args.data)
+        trainEmotionClassifier(args.file, args.data, args.load)
