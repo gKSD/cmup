@@ -65,7 +65,7 @@ def trainEmotionClassifier(file, data, load):
     elif data:
         ec.loadData(data)
 
-    ec.readFeaturesToMem()
+    ec.loadAudioFeaturesToMem()
 
 
 def convertDirMp3ToWavProcess(directory, sample_rate, _channels, need_remove_original = False, use_mp3_tags = False):
