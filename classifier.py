@@ -17,6 +17,8 @@ class Classifier:
 
         self._resultFeaturesDirectory = directory if directory else Config.get_instance().classifierAudioFeaturesResultDirectory
 
+        self._labels = dict()
+
     def _loadDataProcess_impl_(self, input_data):
         config = Config.get_instance()
 
@@ -191,7 +193,7 @@ class Classifier:
                         elif section == "metadata":
                             break #do not process metadata section
                         else:
-                            print "[WARNING] unknown section: '"+ section+"' found, skip"
+                            print "[WARNING] unknown section: '" + section + "' found, skip"
                             break
 
                         file_features = self.__addFeature__(valid_features,
@@ -209,3 +211,11 @@ class Classifier:
 
             print "[CLASSIFIER] n samples: " + str(labels[label_dir].shape[0])
             print "[CLASSIFIER] n features: " + str(labels[label_dir].shape[1])
+
+        self._labels = labels
+
+
+    def normalizeFeatures(self):
+
+        if not _self.labels:
+            self.readFeaturesToMem()

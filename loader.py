@@ -115,24 +115,12 @@ class Loader:
 
                 self._features[user_id] = [features, fileNames]
 
-            #print "features"
-            #print features
-            #print "fileNames ALL =>"
-            #print fileNames
             res_file_name = str(user_id) + '_res_file_name.txt'
-            #print res_file_name
             f = open(res_file_name, 'w')
             for i in range(0, len(fileNames)):
-                #print "fileName => "
-                #print fileNames[i]
-                #print "features.item(i)"
-                #print features[i]
                 j=json.dumps({fileNames[i]:features[i]},cls=NumpyAwareJSONEncoder)
-                #print "string for file:"
-                #print fileNames[i] + "==>" + numpy.array_str(features[i])
                 f.write(j)
                 f.write("\n")
-                #f.write(fileNames[i] + "==>" + numpy.array_str(features[i]))
             f.close()
 
 
