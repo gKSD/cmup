@@ -14,7 +14,7 @@ class Classifier:
     def __init__(self, storage, directory = None):
         self._storage = storage
 
-        self._resultFeaturesDirectory = directory if directory else Config.get_instance().classifierAudioFeaturesResultDirectory
+        self._resultFeaturesDirectory = directory if directory != None else Config.get_instance().classifierAudioFeaturesResultDirectory
 
         config = Config.get_instance()
 

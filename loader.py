@@ -40,15 +40,15 @@ class Loader:
         self._featuresLabels = [] # vector Y m x 1 (m samples)
         self._featuresMatrixAndLabelsComputed = False
 
-        self._resultFeaturesDirectory = result_directory if result_directory else Config.get_instance().classifierAudioFeaturesResultDirectory
+        self._resultFeaturesDirectory = result_directory if result_directory != None else Config.get_instance().classifierAudioFeaturesResultDirectory
 
-        self._validLowlevelFeatures = valid_lowlevel_features if valid_lowlevel_features else "all"
+        self._validLowlevelFeatures = valid_lowlevel_features if valid_lowlevel_features != None else "all"
 
-        self._validTonalFeatures = valid_tonal_features if valid_tonal_features else "all"
+        self._validTonalFeatures = valid_tonal_features if valid_tonal_features != None else "all"
 
-        self._validRhythmFeatures = valid_rhythm_features if valid_rhythm_features else "all"
+        self._validRhythmFeatures = valid_rhythm_features if valid_rhythm_features != None else "all"
 
-        self._validAudioFeatureTypes = valid_audio_features_type if valid_audio_features_type else "all"
+        self._validAudioFeatureTypes = valid_audio_features_type if valid_audio_features_type != None else "all"
 
         self._featureScaler = None
 
@@ -165,7 +165,7 @@ class Loader:
 
         config = Config.get_instance()
 
-        res_dir = result_directory if result_directory else config.audioFeaturesResultDirectory
+        res_dir = result_directory if result_directory != None else config.audioFeaturesResultDirectory
 
         for user_id in user_ids:
             print "[LOADER] essentia feature exctraction for ID: " + user_id
@@ -314,10 +314,10 @@ class Loader:
 
         directory = features_directory if features_directory else self._resultFeaturesDirectory
 
-        valid_lowlevel_features = valid_lowlevel_features if valid_lowlevel_features else self._validLowlevelFeatures
-        valid_tonal_features = valid_tonal_features if valid_tonal_features else self._validTonalFeatures
-        valid_rhythm_features = valid_rhythm_features if valid_rhythm_features else self._validRhythmFeatures
-        valid_audio_features_type = valid_audio_features_type if valid_audio_features_type else self._validAudioFeatureTypes
+        valid_lowlevel_features = valid_lowlevel_features if valid_lowlevel_features != None else self._validLowlevelFeatures
+        valid_tonal_features = valid_tonal_features if valid_tonal_features != None else self._validTonalFeatures
+        valid_rhythm_features = valid_rhythm_features if valid_rhythm_features != None else self._validRhythmFeatures
+        valid_audio_features_type = valid_audio_features_type if valid_audio_features_type != None else self._validAudioFeatureTypes
 
         if not os.path.exists(directory):
             raise Exception("[ERROR] directory: '" + directory +"' doesn't exist")
