@@ -56,7 +56,7 @@ def getResultProcess():
 def trainEmotionClassifier(file, data, load):
     config = Config.get_instance()
 
-    tmp = "calculated_essentia_features/all_dataset_for_counting/4_dataset_audio"
+    tmp = "calculated_essentia_features/all_dataset_for_counting/4_dataset_audio/GROUPED/train/"
 
     ec = EmotionClassifier(storage, tmp)
 
