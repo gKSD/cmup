@@ -5,13 +5,17 @@ import re
 from jsonschema import validate
 from sklearn import preprocessing
 from sklearn.preprocessing import PolynomialFeatures
-
+from sklearn.feature_selection import *
+from sklearn.svm import SVC
+from sklearn.decomposition import PCA
 from lib.audio_feature_extraction.audioBasicIO import *
 from audio_feature_extracter import AudioFeatureExtracter
 from storage import Storage
 from config import Config
 from lib.fingerprint.dejavu.dejavu import decoder as fingerprintDecoder
 from lib.fingerprint.dejavu.dejavu import fingerprint as fingerprint
+import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
 
 class NumpyAwareJSONEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -452,7 +456,7 @@ class Loader:
         return self._featuresLabels
 
 
-    def runFeatureStandardization(self):
+    def runFeatureStandardization(self, print_matrixes = False):
 
         """
         Standardization of datasets is a common requirement for many machine learning estimators
@@ -491,9 +495,16 @@ class Loader:
 
         print "[LOADER] perform feature standartization"
 
-        self._featuresMatrix = preprocessing.scale(self._featuresMatrix, copy=False)
+        if print_matrixes:
+            print self._featuresMatrix
 
-    def runFeatureMinMaxNormalization(self):
+        #self._featuresMatrix =
+        preprocessing.scale(self._featuresMatrix, copy=False)
+
+        if print_matrixes:
+            print self._featuresMatrix
+
+    def runFeatureMinMaxNormalization(self, print_matrixes = False):
 
         """
         An alternative standardization is scaling features to lie between a given minimum
@@ -510,9 +521,18 @@ class Loader:
 
         self.__checkFeatureMatrixAndLables__()
 
-        min_max_scaler = preprocessing.MinMaxScaler()
+        print "[LOADER] perform min max feature scaling (values between 0 and 1)"
 
-        self._featuresMatrix = min_max_scaler.fit_transform(self._featuresMatrix, copy=False)
+        min_max_scaler = preprocessing.MinMaxScaler(copy=False)
+
+        if print_matrixes:
+            print self._featuresMatrix
+
+        #self._featuresMatrix =
+        min_max_scaler.fit_transform(self._featuresMatrix)
+
+        if print_matrixes:
+            print self._featuresMatrix
 
 
     def computeFeatureScaler(self):
@@ -551,8 +571,151 @@ class Loader:
         from sklearn.preprocessing import LabelEncoder
         >> le=LabelEncoder()
         """
-        #TODO
-        pass
+
+        self.__checkFeatureMatrixAndLables__()
+
+        print "[LOADER] perform label encoding"
+
+        print self._featuresLabels
+
+        le = preprocessing.LabelEncoder()
+        le.fit(self._featuresLabels)
+
+        result = le.transform(self._featuresLabels)
+
+        print result
+
+        return result
+
+    def performUnvariatefeatureSelection(self, mode="k_best", score_func_name="f_classif", k = 10):
+        """
+        mode = ["percentile", "k_best", "fpr", "fdr", "fwe"]
+        score_func = ["chi2", "f_classif", "mutual_info_classif"]
+        k - amount of features to leave
+        """
+
+        self.__checkFeatureMatrixAndLables__()
+
+        print "[LOADER] perform unvariate feature selction [score_func: " + score_func_name + ", k: " + str(k) + "]"
+
+        if not(mode in ["percentile", "k_best", "fpr", "fdr", "fwe"]):
+            raise Exception("Unexpected mode for unvariate feature selection!")
+
+        score_func=None
+        if score_func_name == "chi2":
+            print "[WARNING] features should be non-negative"
+            score_func = chi2
+        elif score_func_name == "f_classif":
+            score_func = f_classif
+        elif score_func_name == "mutual_info_classif":
+            score_func = mutual_info_classif
+        else:
+            raise Exception("Unexpected score function for unvariate feature selection!")
+
+        #selector = SelectKBest(score_func, k)
+        selector = GenericUnivariateSelect(score_func, "k_best", k)
+
+        fit = selector.fit(self._featuresMatrix, self._featuresLabels) # непосредственно анализирует признаки и определяет их стоимости
+        # summarize scores
+        numpy.set_printoptions(precision=3)
+        print(fit.scores_) # выводит стоимость каждого признака для принятия результата
+        features = fit.transform(self._featuresMatrix) # применяет посичтанные стоимости к матрице признаков
+        # summarize selected features
+        print(features[0:5,:])
+
+
+    def performRecursiveFeatureSelection(self, k = 10, step=1):
+        """
+        k - amount of features to leave
+        step - int or float, optional (default=1)
+               If greater than or equal to 1, then step corresponds to the
+               (integer) number of features to remove at each iteration.
+               If within (0.0, 1.0), then step corresponds to the percentage
+               (rounded down) of features to remove at each iteration.
+        """
+
+        self.__checkFeatureMatrixAndLables__()
+
+        print "[LOADER] perform recursive feature selction [step: " + str(step) + ", k: " + str(k) + "]"
+
+        svc = SVC(kernel="linear", C=1)
+        rfe = RFE(estimator=svc, n_features_to_select=k, step=step, verbose=1)
+        fit = rfe.fit(self._featuresMatrix, self._featuresLabels)
+        numpy.set_printoptions(precision=3)
+
+        # ranking_ : array of shape [n_features]
+        # The feature ranking, such that ranking_[i] corresponds to the ranking
+        # position of the i-th feature. Selected (i.e., estimated best) features are assigned rank 1.
+        print rfe.ranking_
+        print fit.transform(self._featuresMatrix)
+
+
+    def plotReducedFeatures(self):
+
+        self.__checkFeatureMatrixAndLables__()
+
+        print "[LOADER] printing features (dimension reduction - use PCA with n_components = 2)"
+
+        pca = PCA(2)
+        fit = pca.fit(self._featuresMatrix)
+        features = fit.transform(self._featuresMatrix)
+
+        figure = plt.figure(figsize=(27, 9))
+
+        x_min, x_max = features[:, 0].min() - .5, features[:, 0].max() + .5
+        y_min, y_max = features[:, 1].min() - .5, features[:, 1].max() + .5
+
+        h = .02 # step size in the mesh (сетка)
+
+        xx, yy = numpy.meshgrid(numpy.arange(x_min, x_max, h), numpy.arange(y_min, y_max, h))
+
+        #cm = plt.cm.RdBu
+        #cm_bright = ListedColormap(['#FF0000', '#0000FF'])
+
+        ax = plt.subplot(1, 1, 1)
+        ax.axis('tight')
+        ax.set_title("Input data")
+        # Plot the training points
+        y_train = self.labelEncoding()
+        #ax.scatter(features[:, 0], features[:, 1], c=y_train, cmap=cm_bright)
+        for i in numpy.unique(y_train):
+            print "class: " + str(i)
+            idx = numpy.where(y_train == i)
+            color=None
+            if i == 0:
+                color='y'
+            elif i == 1:
+                color='b'
+            elif i == 2:
+                color='r'
+            elif i == 3:
+                color='g'
+            ax.scatter(features[idx, 0], features[idx, 1], c=color, cmap=plt.cm.Paired)
+# TODO: вынести все преобразователи в переменные класса и например использовать для label в легенде
+        # and testing points
+        #plt.scatter(X_test[:, 0], X_test[:, 1], c=y_test, cmap=cm_bright, alpha=0.6)
+        ax.set_xlim(xx.min(), xx.max())
+        ax.set_ylim(yy.min(), yy.max())
+        ax.set_xticks(())
+        ax.set_yticks(())
+
+        plt.legend()
+        plt.show()
+
+
+    def performPCAFeatureSelection(self, n_components = 3):
+
+        self.__checkFeatureMatrixAndLables__()
+
+        print "[LOADER] perform recursive feature selction [n_components: " + str(n_components) + "]"
+
+        pca = PCA(n_components)
+        fit = pca.fit(self._featuresMatrix)
+        self._featuresMatrix = fit.transform(self._featuresMatrix)
+
+        # summarize components
+        print("[LABEL] PCA Explained Variance: %s") % fit.explained_variance_ratio_
+        print(self._featuresMatrix[0:5,:])
 
 
     def fingerprint(self, filename, limit=None, song_name=None):

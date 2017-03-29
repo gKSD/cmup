@@ -67,13 +67,53 @@ class Config(object):
 
                 if emotionClassifier.get("emotionClassifierLowlevelAudioFeatures"):
                     self.emotionClassifierLowlevelAudioFeatures = emotionClassifier["emotionClassifierLowlevelAudioFeatures"].split('\n')
+                    #self.emotionClassifierLowlevelAudioFeatures = self.__parseFeatures__(self.emotionClassifierLowlevelAudioFeatures)
                 if emotionClassifier.get("emotionClassifierTonalAudioFeatures"):
                     self.emotionClassifierTonalAudioFeatures = emotionClassifier["emotionClassifierTonalAudioFeatures"].split('\n')
+                    #self.emotionClassifierTonalAudioFeatures = self.__parseFeatures__(self.emotionClassifierTonalAudioFeatures)
                 if emotionClassifier.get("emotionClassifierRhythmAudioFeatures"):
                     self.emotionClassifierRhythmAudioFeatures = emotionClassifier["emotionClassifierRhythmAudioFeatures"].split('\n')
+                    #self.emotionClassifierRhythmAudioFeatures = self.__parseFeatures__(self.emotionClassifierRhythmAudioFeatures)
                 if emotionClassifier.get("emotionClassifierAudioFeatureTypes"):
                     self.emotionClassifierAudioFeatureTypes = emotionClassifier["emotionClassifierAudioFeatureTypes"].split('\n')
+                    #self.emotionClassifierAudioFeatureTypes = self.__parseFeatures__(self.emotionClassifierAudioFeatureTypes)
 
+
+    def __parseFeatures__(self, param):
+        #TODO: make it correct and nicer
+        res = []
+
+        for it in param:
+            types = it.split(":")
+            if len(types) == 2:
+                tmp = {types[0]:[]}
+
+                ar = types[1].split(",")
+                for ar_it in ar:
+                    if ar_it == "mean":
+                        tmp[types[0]].append("mean")
+                    if ar_it == "min":
+                        tmp[types[0]].append("min")
+                    if ar_it == "max":
+                        tmp[types[0]].append("max")
+                    if ar_it == "dvar2":
+                        tmp[types[0]].append("dvar2")
+                    if ar_it == "median":
+                        tmp[types[0]].append("median")
+                    if ar_it == "dmean2":
+                        tmp[types[0]].append("dmean2")
+                    if ar_it == "dmean":
+                        tmp[types[0]].append("dmean")
+                    if ar_it == "var":
+                        tmp[types[0]].append("var")
+                    if ar_it == "dvar":
+                        tmp[types[0]].append("dvar")
+
+                res.append(tmp)
+            else:
+                res.append(it)
+
+        return res
 
     @classmethod
     def get_instance(self):
