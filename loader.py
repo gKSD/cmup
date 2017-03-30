@@ -16,6 +16,7 @@ from lib.fingerprint.dejavu.dejavu import decoder as fingerprintDecoder
 from lib.fingerprint.dejavu.dejavu import fingerprint as fingerprint
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
+from enum import Enum
 
 class NumpyAwareJSONEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -24,6 +25,12 @@ class NumpyAwareJSONEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 class Loader:
+    class ScalingType(Enum):
+        NONE    = 0,
+        MINMAX  = 1,
+        ZSCORE = 2
+
+
     def __init__(self,
                  storage,
                  result_directory = None,
@@ -54,7 +61,32 @@ class Loader:
 
         self._validAudioFeatureTypes = valid_audio_features_type if valid_audio_features_type != None else "all"
 
-        self._featureScaler = None
+
+        # different feature scalers
+        self._featuresStandardScaler = None # Z-score sclaing
+        self._featuresMinMaxScaler = None # min max scaling
+        self._featuresScalingType = Loader.ScalingType.NONE
+
+        # label encoding
+        self._featuresEncoder = None #TODO: don't use
+        self._labelsEncoder = None
+        self._labelsEncoded = False
+
+        # polynomial features creater
+        self._polynomialFeaturesMaker = None
+        self._polynomialFeatures = None
+
+        # different feature selectors
+
+
+    def scalingTypeToString(self):
+        if self._featuresScalingType == Loader.ScalingType.NONE:
+            return "None"
+        if self._featuresScalingType == Loader.ScalingType.ZSCORE:
+            return "Z-score"
+        if self._featuresScalingType == Loader.ScalingType.MINMAX:
+            return "Min max"
+        return "Unknown"
 
 
     def load(self, data, ids = None):
@@ -489,17 +521,21 @@ class Loader:
         of the data is likely to not work very well. In these cases, you can use
         robust_scale and RobustScaler as drop-in replacements instead.
         They use more robust estimates for the center and range of your data.
+
+        NB! to perform the same standartization both for traing and for testing datasets use
+            Loader().runFeatureStandardScaler() function
         """
 
         self.__checkFeatureMatrixAndLables__()
 
-        print "[LOADER] perform feature standartization"
+        print "[LOADER] perform feature standartization (using sklearn.preprocessing.scale function)"
 
         if print_matrixes:
             print self._featuresMatrix
 
         #self._featuresMatrix =
         preprocessing.scale(self._featuresMatrix, copy=False)
+        self._featuresScalingType = Loader.ScalingType.ZSCORE
 
         if print_matrixes:
             print self._featuresMatrix
@@ -523,19 +559,25 @@ class Loader:
 
         print "[LOADER] perform min max feature scaling (values between 0 and 1)"
 
-        min_max_scaler = preprocessing.MinMaxScaler(copy=False)
+        if self._featuresScalingType == Loader.ScalingType.MINMAX:
+            print "[WARNING] features are already scaled"
+            return
+
+        if self._featuresMinMaxScaler is None:
+            self._featuresMinMaxScaler = preprocessing.MinMaxScaler(copy=False)
 
         if print_matrixes:
             print self._featuresMatrix
 
         #self._featuresMatrix =
-        min_max_scaler.fit_transform(self._featuresMatrix)
+        self._featuresMinMaxScaler.fit_transform(self._featuresMatrix)
+        self._featuresScalingType = Loader.ScalingType.MINMAX
 
         if print_matrixes:
             print self._featuresMatrix
 
 
-    def computeFeatureScaler(self):
+    def runFeatureStandardScaler(self, features = None):
 
         """
         The preprocessing module further provides a utility class StandardScaler
@@ -547,23 +589,84 @@ class Loader:
         The scaler instance can then be used on new data to transform it the same way it did on the training set:
         >>> scaler.transform([[-1.,  1., 0.]])
         array([[-2.44...,  1.22..., -0.26...]])
+
+        NB! this scaler perform Z-score sclaing as preprocessing.scale,
+            but this allows to use the same scaler both for training and for testing datasets
         """
 
         self.__checkFeatureMatrixAndLables__()
 
-        self._featureScaler = preprocessing.StandardScaler().fit(self._featuresMatrix)
+        print "[LOADER] perform feature standartization (using sklearn.preprocessing.StandardScaler class)"
 
-    def generatePolynomialFeatures (self):
+        if self._featuresScalingType == Loader.ScalingType.ZSCORE:
+            print "[WARNING] features are already scaled"
+            return
+
+        if self._featuresStandardScaler is None:
+            self._featuresStandardScaler = preprocessing.StandardScaler().fit(self._featuresMatrix)
+
+        print self._featuresMatrix
+        self._featuresMatrix = self._featuresStandardScaler.transform(self._featuresMatrix)
+        print self._featuresMatrix
+
+        self._featuresScalingType = Loader.ScalingType.ZSCORE
+
+
+    def unscaleFeatures(self):
+        """
+        Function return original features as before any type of scaling
+        """
+
+        print "[LOADER] unscaling features [used scaling type: " + self.scalingTypeToString() + "]"
+
+        if self._featuresScalingType == Loader.ScalingType.NONE:
+            return
+
+        if self._featuresScalingType == Loader.ScalingType.ZSCORE:
+
+            if self._featuresStandardScaler is None:
+                print "[WARNING] feature StandardScaler is not set, do nothing"
+                return
+
+            self._featuresMatrix = self._featuresStandardScaler.inverse_transform(self._featuresMatrix)
+            print self._featuresMatrix
+            return
+
+        if self._featuresScalingType == Loader.ScalingType.MINMAX:
+
+            if self._featuresMinMaxScaler is None:
+                print "[WARNING] feature MinMaxScaler is not set, do nothing"
+                return
+
+            self._featuresMatrix = self._featuresMinMaxScaler.inverse_transform(self._featuresMatrix)
+            return
+
+        raise Exception("Unknown scaling type, can't unscale features!")
+
+
+    def generatePolynomialFeatures (self, degree = 2):
 
         """
         Transforming features from (X1, X2) to (1, X1, X2, X1^2, X2^2, X1*X2)
+
+        Param: degree - degree of generated polynomial features
+
+        has no inverse transformation
         """
         #TODO
         self.__checkFeatureMatrixAndLables__()
 
-        poly = PolynomialFeatures(2)
+        print "[LOADER] creating polynomial features [degree: " + str(degree) + "]"
 
-        self._featuresMatrix = poly.fit_transform(self._featuresMatrix)
+        if not(_self.polynomialFeatures is None):
+            return
+
+        if _self._polynomialFeaturesMaker is None:
+            _self._polynomialFeaturesMaker = PolynomialFeatures(degree)
+
+        _self._polynomialFeaturesMaker.fit(self._featuresMatrix)
+
+        self._polynomialFeatures = _self._polynomialFeaturesMaker.transform(self._featuresMatrix)
 
 
     def labelEncoding(self):
@@ -576,16 +679,35 @@ class Loader:
 
         print "[LOADER] perform label encoding"
 
+        if self._labelsEncoded:
+            print "[LOADER] labels are already encoded"
+            return
+
         print self._featuresLabels
 
-        le = preprocessing.LabelEncoder()
-        le.fit(self._featuresLabels)
+        if self._labelsEncoder is None:
+            self._labelsEncoder = preprocessing.LabelEncoder()
 
-        result = le.transform(self._featuresLabels)
+        self._labelsEncoder.fit(self._featuresLabels)
 
-        print result
+        self._featuresLabels = self._labelsEncoder.transform(self._featuresLabels)
 
-        return result
+        print self._featuresLabels
+
+
+    def labelDecoding(self):
+
+        print "[LOADER] perform label decoding"
+
+        if self._labelsEncoded:
+            print "[LABEL] labels are already decoded or are original"
+            return
+
+        if self._labelsEncoder is None:
+            print "[WARNING] label encoder is null, return original features"
+            return
+
+        self._featuresLabels = self._labelsEncoder.inverse_transform(self._featuresLabels)
 
     def performUnvariatefeatureSelection(self, mode="k_best", score_func_name="f_classif", k = 10):
         """
@@ -654,11 +776,13 @@ class Loader:
 
         self.__checkFeatureMatrixAndLables__()
 
-        print "[LOADER] printing features (dimension reduction - use PCA with n_components = 2)"
+        print "[LOADER] ploting features (dimension reduction - use PCA with n_components = 2)"
 
         pca = PCA(2)
         fit = pca.fit(self._featuresMatrix)
         features = fit.transform(self._featuresMatrix)
+
+        self.labelEncoding()
 
         figure = plt.figure(figsize=(27, 9))
 
@@ -672,15 +796,15 @@ class Loader:
         #cm = plt.cm.RdBu
         #cm_bright = ListedColormap(['#FF0000', '#0000FF'])
 
-        ax = plt.subplot(1, 1, 1)
+        ax = plt.subplot(2, 1, 1)
         ax.axis('tight')
         ax.set_title("Input data")
         # Plot the training points
-        y_train = self.labelEncoding()
+
         #ax.scatter(features[:, 0], features[:, 1], c=y_train, cmap=cm_bright)
-        for i in numpy.unique(y_train):
+        for i in numpy.unique(self._featuresLabels):
             print "class: " + str(i)
-            idx = numpy.where(y_train == i)
+            idx = numpy.where(self._featuresLabels == i)
             color=None
             if i == 0:
                 color='y'
@@ -690,16 +814,44 @@ class Loader:
                 color='r'
             elif i == 3:
                 color='g'
-            ax.scatter(features[idx, 0], features[idx, 1], c=color, cmap=plt.cm.Paired)
-# TODO: вынести все преобразователи в переменные класса и например использовать для label в легенде
+            ax.scatter(features[idx, 0], features[idx, 1], c=color, cmap=plt.cm.Paired, label=self._labelsEncoder.classes_[i])
+        # TODO: вынести все преобразователи в переменные класса и например использовать для label в легенде
         # and testing points
         #plt.scatter(X_test[:, 0], X_test[:, 1], c=y_test, cmap=cm_bright, alpha=0.6)
         ax.set_xlim(xx.min(), xx.max())
         ax.set_ylim(yy.min(), yy.max())
         ax.set_xticks(())
         ax.set_yticks(())
+        ax.legend()
 
-        plt.legend()
+        ax2 = plt.subplot(2, 1, 2)
+        ax2.set_title("dataset centroids")
+        for i in numpy.unique(self._featuresLabels):
+            print "class: " + str(i)
+            idx = numpy.where(self._featuresLabels == i)
+            print "idx"
+            print idx[0]
+            #print features[idx, :]
+            centroid = numpy.mean(features[idx[0], :], 0)
+            print "Centroid"
+            print centroid
+            color=None
+            if i == 0:
+                color='y'
+            elif i == 1:
+                color='b'
+            elif i == 2:
+                color='r'
+            elif i == 3:
+                color='g'
+            ax2.scatter(centroid[0], centroid[1], c=color, cmap=plt.cm.Paired, label=self._labelsEncoder.classes_[i])
+        # TODO: вынести все преобразователи в переменные класса и например использовать для label в легенде
+        ax2.set_xlim(xx.min(), xx.max())
+        ax2.set_ylim(yy.min(), yy.max())
+        ax2.set_xticks(())
+        ax2.set_yticks(())
+        ax2.legend()
+
         plt.show()
 
 

@@ -61,10 +61,19 @@ class Classifier:
         self._loader.makeFeatureMatrixAndLabels()
 
 
+    def plotDataset(self):
+
+        self._loader.runFeatureStandardScaler()
+
+        self._loader.plotReducedFeatures()
+
+
     def preprocessAudioFeatures(self):
 
         #self._loader.runFeatureMinMaxNormalization(True)
-        self._loader.runFeatureStandardization(True)
+        #self._loader.runFeatureStandardization(True)
+        self._loader.runFeatureStandardScaler()
+        #self._loader.unscaleFeatures()
 
         #self._loader.performUnvariatefeatureSelection("k_best", "f_classif", 50) # что-то выдало))
         #self._loader.performUnvariatefeatureSelection("k_best", "mutual_info_classif", 50) # тоже норм, что-то выдало
@@ -74,8 +83,10 @@ class Classifier:
 
         #self._loader.performRecursiveFeatureSelection(50) #ok
 
-        self._loader.performPCAFeatureSelection()
+        #self._loader.performPCAFeatureSelection()
 
-        self._loader.plotReducedFeatures()
+        #self._loader.plotReducedFeatures()
+
+        #self._loader.labelEncoding()
 
 
