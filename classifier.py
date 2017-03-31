@@ -10,6 +10,9 @@ from loader import Loader
 from config import Config
 from storage import Storage
 
+# TODO: classifier comparance
+# http://scikit-learn.org/stable/auto_examples/classification/plot_classifier_comparison.html
+
 class Classifier:
     def __init__(self, storage, directory = None):
         self._storage = storage
