@@ -26,10 +26,16 @@ class NumpyAwareJSONEncoder(json.JSONEncoder):
 
 class Loader:
     class ScalingType(Enum):
-        NONE    = 0,
-        MINMAX  = 1,
-        ZSCORE = 2
+        ST_NONE    = 0,
+        ST_MINMAX  = 1,
+        ST_ZSCORE  = 2
 
+    class FeatureSelectionType(Enum):
+        FST_NONE = 0,
+        FST_GENERIC_UNIVARIATIVE = 1,
+        FST_RECURSIVE = 2,
+        FST_PCA = 3,
+        FST_L1BASED = 4
 
     def __init__(self,
                  storage,
@@ -65,27 +71,48 @@ class Loader:
         # different feature scalers
         self._featuresStandardScaler = None # Z-score sclaing
         self._featuresMinMaxScaler = None # min max scaling
-        self._featuresScalingType = Loader.ScalingType.NONE
+        self._featuresScalingType = Loader.ScalingType.ST_NONE
+
 
         # label encoding
         self._featuresEncoder = None #TODO: don't use
         self._labelsEncoder = None
         self._labelsEncoded = False
 
-        # polynomial features creater
+
+        # polynomial features createSC_r
         self._polynomialFeaturesMaker = None
         self._polynomialFeatures = None
 
+
         # different feature selectors
+        self._featuresSelectorType = Loader.FeatureSelectionType.FST_NONE
+        self._genericUnivariateSelector = None
+        self._recursiveSelector = None
+        self._PCASelector = None
 
 
     def scalingTypeToString(self):
-        if self._featuresScalingType == Loader.ScalingType.NONE:
+        if self._featuresScalingType == Loader.ScalingType.ST_NONE:
             return "None"
-        if self._featuresScalingType == Loader.ScalingType.ZSCORE:
+        if self._featuresScalingType == Loader.ScalingType.ST_ZSCORE:
             return "Z-score"
-        if self._featuresScalingType == Loader.ScalingType.MINMAX:
+        if self._featuresScalingType == Loader.ScalingType.ST_MINMAX:
             return "Min max"
+        return "Unknown"
+
+
+    def featureSelectorTypeToString(self):
+        if self._featuresSelectorType == Loader.FeatureSelectionType.FST_NONE:
+            return "None"
+        if self._featuresSelectorType == Loader.FeatureSelectionType.FST_GENERIC_UNIVARIATIVE:
+            return "Generic univariative"
+        if self._featuresSelectorType == Loader.FeatureSelectionType.FST_RECURSIVE:
+            return "Recursive"
+        if self._featuresSelectorType == Loader.FeatureSelectionType.FST_PCA:
+            return "PCA"
+        if self._featuresSelectorType == Loader.FeatureSelectionType.FST_L1BASED:
+            return "L1 based"
         return "Unknown"
 
 
@@ -535,7 +562,7 @@ class Loader:
 
         #self._featuresMatrix =
         preprocessing.scale(self._featuresMatrix, copy=False)
-        self._featuresScalingType = Loader.ScalingType.ZSCORE
+        self._featuresScalingType = Loader.ScalingType.ST_ZSCORE
 
         if print_matrixes:
             print self._featuresMatrix
@@ -559,7 +586,7 @@ class Loader:
 
         print "[LOADER] perform min max feature scaling (values between 0 and 1)"
 
-        if self._featuresScalingType == Loader.ScalingType.MINMAX:
+        if self._featuresScalingType == Loader.ScalingType.ST_MINMAX:
             print "[WARNING] features are already scaled"
             return
 
@@ -571,7 +598,7 @@ class Loader:
 
         #self._featuresMatrix =
         self._featuresMinMaxScaler.fit_transform(self._featuresMatrix)
-        self._featuresScalingType = Loader.ScalingType.MINMAX
+        self._featuresScalingType = Loader.ScalingType.ST_MINMAX
 
         if print_matrixes:
             print self._featuresMatrix
@@ -598,7 +625,7 @@ class Loader:
 
         print "[LOADER] perform feature standartization (using sklearn.preprocessing.StandardScaler class)"
 
-        if self._featuresScalingType == Loader.ScalingType.ZSCORE:
+        if self._featuresScalingType == Loader.ScalingType.ST_ZSCORE:
             print "[WARNING] features are already scaled"
             return
 
@@ -609,7 +636,7 @@ class Loader:
         self._featuresMatrix = self._featuresStandardScaler.transform(self._featuresMatrix)
         print self._featuresMatrix
 
-        self._featuresScalingType = Loader.ScalingType.ZSCORE
+        self._featuresScalingType = Loader.ScalingType.ST_ZSCORE
 
 
     def unscaleFeatures(self):
@@ -619,10 +646,10 @@ class Loader:
 
         print "[LOADER] unscaling features [used scaling type: " + self.scalingTypeToString() + "]"
 
-        if self._featuresScalingType == Loader.ScalingType.NONE:
+        if self._featuresScalingType == Loader.ScalingType.ST_NONE:
             return
 
-        if self._featuresScalingType == Loader.ScalingType.ZSCORE:
+        if self._featuresScalingType == Loader.ScalingType.ST_ZSCORE:
 
             if self._featuresStandardScaler is None:
                 print "[WARNING] feature StandardScaler is not set, do nothing"
@@ -632,7 +659,7 @@ class Loader:
             print self._featuresMatrix
             return
 
-        if self._featuresScalingType == Loader.ScalingType.MINMAX:
+        if self._featuresScalingType == Loader.ScalingType.ST_MINMAX:
 
             if self._featuresMinMaxScaler is None:
                 print "[WARNING] feature MinMaxScaler is not set, do nothing"
@@ -720,6 +747,12 @@ class Loader:
 
         print "[LOADER] perform unvariate feature selction [score_func: " + score_func_name + ", k: " + str(k) + "]"
 
+        if self._featuresSelectorType == Loader.FeatureSelectionType.FST_GENERIC_UNIVARIATIVE:
+            print "[WARNING] unvariate feature selction is already done, perform univariative inverse transorm"
+            self._featuresMatrix = self._genericUnivariateSelector.inverse_transform(self._featuresMatrix)
+        elif self._featuresSelectorType != Loader.FeatureSelectionType.FST_NONE:
+            raise Exception("Can't perform Univariative selection, feature selection '" + self.featureSelectorTypeToString() + "' is done")
+
         if not(mode in ["percentile", "k_best", "fpr", "fdr", "fwe"]):
             raise Exception("Unexpected mode for unvariate feature selection!")
 
@@ -734,16 +767,26 @@ class Loader:
         else:
             raise Exception("Unexpected score function for unvariate feature selection!")
 
-        #selector = SelectKBest(score_func, k)
-        selector = GenericUnivariateSelect(score_func, "k_best", k)
+        if self._genericUnivariateSelector is None:
+            #selector = SelectKBest(score_func, k)
+            self._genericUnivariateSelector = GenericUnivariateSelect(score_func, "k_best", k)
+        else:
+            self._genericUnivariateSelector.set_params(score_func=score_func, mode="k_best", param=k)
 
-        fit = selector.fit(self._featuresMatrix, self._featuresLabels) # непосредственно анализирует признаки и определяет их стоимости
+        # непосредственно анализирует признаки и определяет их стоимости
+        self._genericUnivariateSelector.fit(self._featuresMatrix, self._featuresLabels)
         # summarize scores
         numpy.set_printoptions(precision=3)
-        print(fit.scores_) # выводит стоимость каждого признака для принятия результата
-        features = fit.transform(self._featuresMatrix) # применяет посичтанные стоимости к матрице признаков
+        # выводит стоимость каждого признака для принятия результата
+        print(self._genericUnivariateSelector.scores_)
+
+        # применяет посичтанные стоимости к матрице признаков
         # summarize selected features
-        print(features[0:5,:])
+        self._featuresMatrix = self._genericUnivariateSelector.transform(self._featuresMatrix)
+        print(self._featuresMatrix[0:5,:])
+
+        # setting class params
+        self._featuresSelectorType = Loader.FeatureSelectionType.FST_GENERIC_UNIVARIATIVE
 
 
     def performRecursiveFeatureSelection(self, k = 10, step=1):
@@ -760,16 +803,30 @@ class Loader:
 
         print "[LOADER] perform recursive feature selction [step: " + str(step) + ", k: " + str(k) + "]"
 
-        svc = SVC(kernel="linear", C=1)
-        rfe = RFE(estimator=svc, n_features_to_select=k, step=step, verbose=1)
-        fit = rfe.fit(self._featuresMatrix, self._featuresLabels)
+        if self._featuresSelectorType == Loader.FeatureSelectionType.FST_RECURSIVE:
+            print "[WARNING] recursive feature selection is already done, perform inverse rescursive transform"
+            self._featuresMatrix = self._recursiveSelector.inverse_transform(self._featuresMatrix)
+        elif self._featuresSelectorType != Loader.FeatureSelectionType.FST_NONE:
+            raise Exception("Can't perform recursive selection, feature selection '" + self.featureSelectorTypeToString() + "' is done")
+
+        if self._recursiveSelector is None:
+            svc = SVC(kernel="linear", C=1)
+            self._recursiveSelector = RFE(estimator=svc, n_features_to_select=k, step=step, verbose=1)
+        else:
+            self._recursiveSelector.set_params(n_features_to_select=k, step=step)
+
+        self._recursiveSelector.fit(self._featuresMatrix, self._featuresLabels)
         numpy.set_printoptions(precision=3)
 
         # ranking_ : array of shape [n_features]
         # The feature ranking, such that ranking_[i] corresponds to the ranking
         # position of the i-th feature. Selected (i.e., estimated best) features are assigned rank 1.
-        print rfe.ranking_
-        print fit.transform(self._featuresMatrix)
+        print self._recursiveSelector.ranking_
+        self._featuresMatrix = self._recursiveSelector.transform(self._featuresMatrix)
+        print self._featuresMatrix
+
+        # setting class params
+        self._featuresSelectorType = Loader.FeatureSelectionType.FST_RECURSIVE
 
 
     def plotReducedFeatures(self):
@@ -861,14 +918,30 @@ class Loader:
 
         print "[LOADER] perform recursive feature selction [n_components: " + str(n_components) + "]"
 
-        pca = PCA(n_components)
-        fit = pca.fit(self._featuresMatrix)
-        self._featuresMatrix = fit.transform(self._featuresMatrix)
+        if self._featuresSelectorType == Loader.FeatureSelectionType.FST_PCA:
+            print "[WARNING] unvariate feature selction is already done, perform univariative inverse transorm"
+            self._featuresMatrix = self._PCASelector.inverse_transform(self._featuresMatrix)
+        elif self._featuresSelectorType != Loader.FeatureSelectionType.FST_NONE:
+            raise Exception("Can't perform Univariative selection, feature selection '" + self.featureSelectorTypeToString() + "' is done")
+
+        if self._PCASelector is None:
+            self._PCASelector = PCA(n_components)
+        else:
+            self._PCASelector.set_params(n_components = n_components)
+
+        self._PCASelector.fit(self._featuresMatrix)
+        self._featuresMatrix = self._PCASelector.transform(self._featuresMatrix)
 
         # summarize components
-        print("[LABEL] PCA Explained Variance: %s") % fit.explained_variance_ratio_
+        print("[LABEL] PCA Explained Variance: %s") % self._PCASelector.explained_variance_ratio_
         print(self._featuresMatrix[0:5,:])
 
+        # setting class params
+        self._featuresSelectorType = Loader.FeatureSelectionType.FST_PCA
+
+
+    def performL1BasedFeatureSelection(self):
+        pass
 
     def fingerprint(self, filename, limit=None, song_name=None):
         print "[LOADER] fingerprinting filename: " + filename

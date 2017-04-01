@@ -78,7 +78,7 @@ class Classifier:
         self._loader.runFeatureStandardScaler()
         #self._loader.unscaleFeatures()
 
-        #self._loader.performUnvariatefeatureSelection("k_best", "f_classif", 50) # что-то выдало))
+        self._loader.performUnvariatefeatureSelection("k_best", "f_classif", 50) # что-то выдало))
         #self._loader.performUnvariatefeatureSelection("k_best", "mutual_info_classif", 50) # тоже норм, что-то выдало
         #self._loader.performUnvariatefeatureSelection("fpr", "f_classif", 50) # тоже ок
         #self._loader.performUnvariatefeatureSelection("fdr", "f_classif", 50) # тоже ок
