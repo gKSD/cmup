@@ -8,6 +8,8 @@ from sklearn.preprocessing import PolynomialFeatures
 from sklearn.feature_selection import *
 from sklearn.svm import SVC
 from sklearn.decomposition import PCA
+from sklearn.svm import LinearSVC
+from sklearn.ensemble import ExtraTreesClassifier
 from lib.audio_feature_extraction.audioBasicIO import *
 from audio_feature_extracter import AudioFeatureExtracter
 from storage import Storage
@@ -35,7 +37,8 @@ class Loader:
         FST_GENERIC_UNIVARIATIVE = 1,
         FST_RECURSIVE = 2,
         FST_PCA = 3,
-        FST_L1BASED = 4
+        FST_L1BASED = 4,
+        FST_TREE_BASED = 5
 
     def __init__(self,
                  storage,
@@ -90,6 +93,8 @@ class Loader:
         self._genericUnivariateSelector = None
         self._recursiveSelector = None
         self._PCASelector = None
+        self._L1BasedSelector = None   # using SelectFromModel
+        self._treeBasedSelector = None # using SelectFromModel
 
 
     def scalingTypeToString(self):
@@ -916,13 +921,13 @@ class Loader:
 
         self.__checkFeatureMatrixAndLables__()
 
-        print "[LOADER] perform recursive feature selction [n_components: " + str(n_components) + "]"
+        print "[LOADER] perform PCA feature selction [n_components: " + str(n_components) + "]"
 
         if self._featuresSelectorType == Loader.FeatureSelectionType.FST_PCA:
-            print "[WARNING] unvariate feature selction is already done, perform univariative inverse transorm"
+            print "[WARNING] PCA feature selction is already done, perform PCA inverse transorm"
             self._featuresMatrix = self._PCASelector.inverse_transform(self._featuresMatrix)
         elif self._featuresSelectorType != Loader.FeatureSelectionType.FST_NONE:
-            raise Exception("Can't perform Univariative selection, feature selection '" + self.featureSelectorTypeToString() + "' is done")
+            raise Exception("Can't perform PCA selection, feature selection '" + self.featureSelectorTypeToString() + "' is done")
 
         if self._PCASelector is None:
             self._PCASelector = PCA(n_components)
@@ -940,8 +945,103 @@ class Loader:
         self._featuresSelectorType = Loader.FeatureSelectionType.FST_PCA
 
 
-    def performL1BasedFeatureSelection(self):
-        pass
+    def performL1BasedFeatureSelection(self, C=0.005):
+        """
+        C regulates feature count
+        """
+
+        self.__checkFeatureMatrixAndLables__()
+
+        print "[LOADER] perform L1 based feature selction"
+
+        if self._featuresSelectorType == Loader.FeatureSelectionType.FST_L1BASED:
+            print "[WARNING] L1 Based feature selction is already done, perform L1 Based inverse transorm"
+            return
+            #self._featuresMatrix = self._PCASelector.inverse_transform(self._featuresMatrix)
+        elif self._featuresSelectorType != Loader.FeatureSelectionType.FST_NONE:
+            raise Exception("Can't perform L1 Based selection, feature selection '" + self.featureSelectorTypeToString() + "' is done")
+
+        lsvc = LinearSVC(C=C, penalty="l1", dual=False).fit(self._featuresMatrix, self._featuresLabels)
+        self._L1BasedSelector = SelectFromModel(lsvc, prefit=True)
+
+        self._featuresMatrix = self._L1BasedSelector.transform(self._featuresMatrix)
+
+        # summarize components
+        print self._featuresMatrix.shape
+        print(self._featuresMatrix[0:5,:])
+
+        # setting class params
+        self._featuresSelectorType = Loader.FeatureSelectionType.FST_L1BASED
+
+
+    def performTreeBasedFeatureSelection(self):
+        """
+        do not know how to regulate
+        """
+
+        self.__checkFeatureMatrixAndLables__()
+
+        print "[LOADER] perform Tree based feature selction"
+
+        if self._featuresSelectorType == Loader.FeatureSelectionType.FST_TREE_BASED:
+            print "[WARNING] Tree Based feature selction is already done, perform Tree Based inverse transorm"
+            return
+            #self._featuresMatrix = self._PCASelector.inverse_transform(self._featuresMatrix)
+        elif self._featuresSelectorType != Loader.FeatureSelectionType.FST_NONE:
+            raise Exception("Can't perform Tree Based selection, feature selection '" + self.featureSelectorTypeToString() + "' is done")
+
+        clf = ExtraTreesClassifier()
+        clf.fit(self._featuresMatrix, self._featuresLabels)
+        print "[LOADER] Tree based feature selection, feature importances: "
+        print clf.feature_importances_
+        self._treeBasedSelector = SelectFromModel(clf, prefit=True)
+
+        print self._featuresMatrix
+
+        self._featuresMatrix = self._treeBasedSelector.transform(self._featuresMatrix)
+
+        # summarize components
+        print self._featuresMatrix.shape
+        print(self._featuresMatrix[0:5,:])
+
+        # setting class params
+        self._featuresSelectorType = Loader.FeatureSelectionType.FST_TREE_BASED
+
+        print self._treeBasedSelector.inverse_transform(self._featuresMatrix)
+
+
+    def makeOriginalFeaturesSetAfterFeatureSelection(self):
+        if self._featuresSelectorType == Loader.FeatureSelectionType.FST_NONE:
+            return
+
+        if self._featuresSelectorType == Loader.FeatureSelectionType.FST_GENERIC_UNIVARIATIVE:
+            if not(self._genericUnivariateSelector is None):
+                self._featuresMatrix = self._genericUnivariateSelector.inverse_transform(self._featuresMatrix)
+                return
+
+        if self._featuresSelectorType == Loader.FeatureSelectionType.FST_RECURSIVE:
+            if not(self._recursiveSelector is None):
+                self._featuresMatrix = self._recursiveSelector.inverse_transform(self._featuresMatrix)
+                return
+
+        if self._featuresSelectorType == Loader.FeatureSelectionType.FST_PCA:
+            if not(self._PCASelector is None):
+                self._featuresMatrix = self._PCASelector.inverse_transform(self._featuresMatrix)
+                return
+
+        if self._featuresSelectorType == Loader.FeatureSelectionType.FST_L1BASED:
+            if not(self._L1BasedSelector is None):
+                self._featuresMatrix = self._L1BasedSelector.inverse_transform(self._featuresMatrix)
+                return
+
+        if self._featuresSelectorType == Loader.FeatureSelectionType.FST_TREE_BASED:
+            if not(self._treeBasedSelector is None):
+                self._featuresMatrix = self._treeBasedSelector.inverse_transform(self._featuresMatrix)
+                return
+
+        # fall here if invalid type found or appropriate selector is None
+        raise Exception("Unknow feature selection state")
+
 
     def fingerprint(self, filename, limit=None, song_name=None):
         print "[LOADER] fingerprinting filename: " + filename
