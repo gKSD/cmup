@@ -97,26 +97,26 @@ class Loader:
         self._treeBasedSelector = None # using SelectFromModel
 
 
-    def scalingTypeToString(self):
-        if self._featuresScalingType == Loader.ScalingType.ST_NONE:
+    def scalingTypeToString(self, stype):
+        if stype == Loader.ScalingType.ST_NONE:
             return "None"
-        if self._featuresScalingType == Loader.ScalingType.ST_ZSCORE:
+        if stype == Loader.ScalingType.ST_ZSCORE:
             return "Z-score"
-        if self._featuresScalingType == Loader.ScalingType.ST_MINMAX:
+        if stype == Loader.ScalingType.ST_MINMAX:
             return "Min max"
         return "Unknown"
 
 
-    def featureSelectorTypeToString(self):
-        if self._featuresSelectorType == Loader.FeatureSelectionType.FST_NONE:
+    def featureSelectorTypeToString(self, fstype):
+        if fstype == Loader.FeatureSelectionType.FST_NONE:
             return "None"
-        if self._featuresSelectorType == Loader.FeatureSelectionType.FST_GENERIC_UNIVARIATIVE:
+        if fstype == Loader.FeatureSelectionType.FST_GENERIC_UNIVARIATIVE:
             return "Generic univariative"
-        if self._featuresSelectorType == Loader.FeatureSelectionType.FST_RECURSIVE:
+        if fstype == Loader.FeatureSelectionType.FST_RECURSIVE:
             return "Recursive"
-        if self._featuresSelectorType == Loader.FeatureSelectionType.FST_PCA:
+        if fstype == Loader.FeatureSelectionType.FST_PCA:
             return "PCA"
-        if self._featuresSelectorType == Loader.FeatureSelectionType.FST_L1BASED:
+        if fstype == Loader.FeatureSelectionType.FST_L1BASED:
             return "L1 based"
         return "Unknown"
 
@@ -145,14 +145,11 @@ class Loader:
     def printData(self):
         print json.dumps(self.__data, separators=(',',':'))
 
-    def data(self):
-        return self.__data
-
-    def extractFeatures(self):
-        if not self.__data:
+    def extractFeatures(self, data):
+        if not data:
             raise Exception("Errror: input data is empty or error occured while parsing")
 
-        user_ids = self.__data.keys()
+        user_ids = data.keys()
 
         print "[LOADER] feature exctraction for IDs: "+ ', '.join(user_ids)
 
@@ -164,9 +161,9 @@ class Loader:
             features = numpy.array([])
             fileNames = []
 
-            if "dirs" in self.__data[user_id]:
+            if "dirs" in data[user_id]:
 
-                dir_names = self.__data[user_id]["dirs"]
+                dir_names = data[user_id]["dirs"]
 
                 print "[LOADER] feature exctraction for dirs: '" + ', '.join(dir_names) + "'"
 
@@ -183,10 +180,10 @@ class Loader:
                 except Exception as e:
                     print "[LOADER] error while processing dirs: " + ', '.join(dir_names) + ", skip [Error:" + str(e) +"]"
 
-            if "files" in self.__data[user_id]:
-                print "[LOADER] feature extraction for files: " + ', '.join(self.__data[user_id]["files"])
+            if "files" in data[user_id]:
+                print "[LOADER] feature extraction for files: " + ', '.join(data[user_id]["files"])
 
-                files = self.__data[user_id]["files"]
+                files = data[user_id]["files"]
 
                 for i, file_name in enumerate(files):
                     print "[LOADER] Analyzing file {0:d} of {1:d}: {2:s}".format(i + 1, len(files), file_name.encode('utf-8'))
@@ -222,30 +219,37 @@ class Loader:
             f.close()
 
 
-    def extractFeaturesEssentia(self, result_directory = None):
+    def extractFeaturesEssentia(self, result_directory, data):
 
-        if not self.__data:
+        if data is None:
             raise Exception("Errror: input data is empty or error occured while data parsing")
 
-        user_ids = self.__data.keys()
+        if not result_directory:
+            raise Exception("Error: result directory must be set")
 
-        print "[LOADER] essentia feature exctraction for IDs: "+ ', '.join(user_ids)
+        identifiers = data.keys()
+
+        print "[LOADER] essentia feature exctraction for IDs: "+ ', '.join(identifiers)
 
         config = Config.get_instance()
 
-        res_dir = result_directory if result_directory != None else config.audioFeaturesResultDirectory
+        res_dir = result_directory
 
-        for user_id in user_ids:
-            print "[LOADER] essentia feature exctraction for ID: " + user_id
+        for identifier in identifiers:
+            print "[LOADER] essentia feature exctraction for ID: " + identifier
 
-            user_res_dir = res_dir + "/" + user_id
+            user_res_dir = res_dir + "/" + identifier
+
+            if not os.path.exists(user_res_dir):
+                os.makedirs(user_res_dir)
+
 
             features = numpy.array([])
             fileNames = []
 
-            if "dirs" in self.__data[user_id]:
+            if "dirs" in data[identifier]:
 
-                dir_names = self.__data[user_id]["dirs"]
+                dir_names = data[identifier]["dirs"]
 
                 print "[LOADER] essentia feature exctraction for dirs: '" + ', '.join(dir_names) + "'"
 
@@ -256,10 +260,10 @@ class Loader:
                         print "[LOADER] essentia error while processing dir: " + ', '.join(dir_name) + ", skip [Error:" + str(e) +"]"
                         continue
 
-            if "files" in self.__data[user_id]:
-                print "[LOADER] essentia feature extraction for files: " + ', '.join(self.__data[user_id]["files"])
+            if "files" in data[identifier]:
+                print "[LOADER] essentia feature extraction for files: " + ', '.join(data[identifier]["files"])
 
-                files = self.__data[user_id]["files"]
+                files = data[identifier]["files"]
 
                 for i, file_name in enumerate(files):
                     print "[LOADER] essentia analyzing file {0:d} of {1:d}: {2:s}".format(i + 1, len(files), file_name.encode('utf-8'))
@@ -374,13 +378,13 @@ class Loader:
 
 
     def readFeaturesToMem(self,
-                          features_directory = None,
+                          features_directory,
                           valid_lowlevel_features = None,
                           valid_tonal_features = None,
                           valid_rhythm_features = None,
                           valid_audio_features_type = None):
 
-        directory = features_directory if features_directory else self._resultFeaturesDirectory
+        directory = features_directory
 
         valid_lowlevel_features = valid_lowlevel_features if valid_lowlevel_features != None else self._validLowlevelFeatures
         valid_tonal_features = valid_tonal_features if valid_tonal_features != None else self._validTonalFeatures
@@ -449,78 +453,72 @@ class Loader:
 
             labels[label_dir] = label_features
 
-            print "[LOADER] n features: " + str(labels[label_dir].shape[1])
-            print "[LOADER] m samples: " + str(labels[label_dir].shape[0])
+            if labels[label_dir].size == 0:
+                print "[LOADER] no data found"
+            else:
+                print "[LOADER] n features: " + str(labels[label_dir].shape[1])
+                print "[LOADER] m samples: " + str(labels[label_dir].shape[0])
 
-        self._audioFeaturesByIdentifier = labels
-
-
-    def __checkFeatures__(self):
-
-        if not self._audioFeaturesByIdentifier:
-            self.readFeaturesToMem()
-
-        if not self._audioFeaturesByIdentifier:
-            raise Exception("[ERROR] empty feature vector!!!")
-
-    def __checkFeatureMatrixAndLables__(self):
-
-        self.__checkFeatures__()
-
-        if not self._featuresMatrixAndLabelsComputed:
-            print "[WARNING] making feature matrix and labels vector from loaded features"
-
-            self._featuresMatrix = []
-            self._featuresLabels = []
-
-            self.makeFeatureMatrixAndLabels()
+        #self._audioFeaturesByIdentifier = labels
+        return labels
 
 
-    def makeFeatureMatrixAndLabels(self, needRandomShuffle = False):
+    def __checkFeaturesByIdentifier__(self, featuresByIdentifier):
+
+        if featuresByIdentifier is None:
+            raise Exception("Error, features is None")
+
+
+    def __checkFeatureMatrix__(self, features):
+
+        if features is None:
+            raise Exception("Error feature matrix is None")
+
+
+    def __checkFeatureMatrixAndLables__(self, features, labels):
+
+        self.__checkFeatureMatrix__(features)
+
+        if features is None:
+            raise Exception("Error feature labels is None")
+
+
+    def makeFeatureMatrixAndLabels(self, featuresByIdentifier, needRandomShuffle = False):
 
         print "[LOADER] making feature matrix and feature labels vector"
 
-        self.__checkFeatures__()
+        self.__checkFeaturesByIdentifier__(featuresByIdentifier)
 
-        for identifier in self._audioFeaturesByIdentifier:
+        x = numpy.array([])
+        y = []
 
-            m_samples = self._audioFeaturesByIdentifier[identifier].shape[0]
+        for identifier in featuresByIdentifier:
 
-            if len(self._featuresMatrix) == 0:                              # append feature vector
-                self._featuresMatrix = self._audioFeaturesByIdentifier[identifier]
+            m_samples = featuresByIdentifier[identifier].shape[0]
+
+            if m_samples == 0:
+                print "[WARNING] no files found in " + identifier
+                continue
+
+            if len(x) == 0:                              # append feature vector
+                x = featuresByIdentifier[identifier]
             else:
-                self._featuresMatrix = numpy.vstack((self._featuresMatrix, self._audioFeaturesByIdentifier[identifier]))
+                x = numpy.vstack((x, featuresByIdentifier[identifier]))
 
-            self._featuresLabels = numpy.append(self._featuresLabels, numpy.full(m_samples, identifier, dtype='|S2'))
+            y = numpy.append(y, numpy.full(m_samples, identifier, dtype='|S2'))
 
         self._featuresMatrixAndLabelsComputed = True
 
-        print "[LOADER] feature matrix shape: " + str(self._featuresMatrix.shape[0]) + " x " + str(self._featuresMatrix.shape[1])
-        print "[LOADER] feature labels shape: " + str(self._featuresLabels.shape[0])
+        if x.size == 0:
+            print "[LOADER] feature matrix and labels are empty"
+        else:
+            print "[LOADER] feature matrix shape: " + str(x.shape[0]) + " x " + str(x.shape[1])
+            print "[LOADER] feature labels shape: " + str(y.shape[0])
+
+        return [x, y]
 
 
-    def features(self):
-
-        self.__checkFeatures__()
-
-        return self._audioFeaturesByIdentifier
-
-
-    def Xmatrix(self):
-
-        self.__checkFeatureMatrixAndLables__()
-
-        return self._featuresMatrix
-
-
-    def Yvector(self):
-
-        self.__checkFeatureMatrixAndLables__()
-
-        return self._featuresLabels
-
-
-    def runFeatureStandardization(self, print_matrixes = False):
+    def runFeatureStandardization(self, data, print_matrixes = False):
 
         """
         Standardization of datasets is a common requirement for many machine learning estimators
@@ -558,21 +556,23 @@ class Loader:
             Loader().runFeatureStandardScaler() function
         """
 
-        self.__checkFeatureMatrixAndLables__()
+        self.__checkFeatureMatrix__(data.X())
 
         print "[LOADER] perform feature standartization (using sklearn.preprocessing.scale function)"
 
         if print_matrixes:
-            print self._featuresMatrix
+            print data.X()
 
         #self._featuresMatrix =
-        preprocessing.scale(self._featuresMatrix, copy=False)
-        self._featuresScalingType = Loader.ScalingType.ST_ZSCORE
+        preprocessing.scale(data.X(), copy=False)
+        data.setScalingType(Loader.ScalingType.ST_ZSCORE)
 
         if print_matrixes:
-            print self._featuresMatrix
+            print data.X()
 
-    def runFeatureMinMaxNormalization(self, print_matrixes = False):
+        #return features
+
+    def runFeatureMinMaxNormalization(self, data, print_matrixes = False):
 
         """
         An alternative standardization is scaling features to lie between a given minimum
@@ -587,11 +587,11 @@ class Loader:
         X_std = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
         """
 
-        self.__checkFeatureMatrixAndLables__()
+        self.__checkFeatureMatrix__(data.X())
 
         print "[LOADER] perform min max feature scaling (values between 0 and 1)"
 
-        if self._featuresScalingType == Loader.ScalingType.ST_MINMAX:
+        if data.scalingType() == Loader.ScalingType.ST_MINMAX:
             print "[WARNING] features are already scaled"
             return
 
@@ -599,17 +599,17 @@ class Loader:
             self._featuresMinMaxScaler = preprocessing.MinMaxScaler(copy=False)
 
         if print_matrixes:
-            print self._featuresMatrix
+            print data.X()
 
         #self._featuresMatrix =
-        self._featuresMinMaxScaler.fit_transform(self._featuresMatrix)
-        self._featuresScalingType = Loader.ScalingType.ST_MINMAX
+        self._featuresMinMaxScaler.fit_transform(data.X())
+        data.setScalingType(Loader.ScalingType.ST_MINMAX)
 
         if print_matrixes:
-            print self._featuresMatrix
+            print data.X()
 
 
-    def runFeatureStandardScaler(self, features = None):
+    def runFeatureStandardScaler(self, data):
 
         """
         The preprocessing module further provides a utility class StandardScaler
@@ -626,57 +626,59 @@ class Loader:
             but this allows to use the same scaler both for training and for testing datasets
         """
 
-        self.__checkFeatureMatrixAndLables__()
+        self.__checkFeatureMatrix__(data.X())
 
         print "[LOADER] perform feature standartization (using sklearn.preprocessing.StandardScaler class)"
 
-        if self._featuresScalingType == Loader.ScalingType.ST_ZSCORE:
+        if data.scalingType() == Loader.ScalingType.ST_ZSCORE:
             print "[WARNING] features are already scaled"
             return
 
         if self._featuresStandardScaler is None:
-            self._featuresStandardScaler = preprocessing.StandardScaler().fit(self._featuresMatrix)
+            self._featuresStandardScaler = preprocessing.StandardScaler()
+        
+        self._featuresStandardScaler.fit(data.X())
 
-        print self._featuresMatrix
-        self._featuresMatrix = self._featuresStandardScaler.transform(self._featuresMatrix)
-        print self._featuresMatrix
+        print data.X()
+        data.setX( self._featuresStandardScaler.transform(data.X()) )
+        print data.X()
 
-        self._featuresScalingType = Loader.ScalingType.ST_ZSCORE
+        data.setScalingType(Loader.ScalingType.ST_ZSCORE)
 
 
-    def unscaleFeatures(self):
+    def unscaleFeatures(self, data):
         """
         Function return original features as before any type of scaling
         """
 
-        print "[LOADER] unscaling features [used scaling type: " + self.scalingTypeToString() + "]"
+        print "[LOADER] unscaling features [used scaling type: " + self.scalingTypeToString(data.scalingType()) + "]"
 
-        if self._featuresScalingType == Loader.ScalingType.ST_NONE:
+        if data.scalingType() == Loader.ScalingType.ST_NONE:
             return
 
-        if self._featuresScalingType == Loader.ScalingType.ST_ZSCORE:
+        if data.scalingType() == Loader.ScalingType.ST_ZSCORE:
 
             if self._featuresStandardScaler is None:
                 print "[WARNING] feature StandardScaler is not set, do nothing"
                 return
 
-            self._featuresMatrix = self._featuresStandardScaler.inverse_transform(self._featuresMatrix)
-            print self._featuresMatrix
+            data.setX( self._featuresStandardScaler.inverse_transform(data.X()) )
+            print data.X()
             return
 
-        if self._featuresScalingType == Loader.ScalingType.ST_MINMAX:
+        if data.scalingType() == Loader.ScalingType.ST_MINMAX:
 
             if self._featuresMinMaxScaler is None:
                 print "[WARNING] feature MinMaxScaler is not set, do nothing"
                 return
 
-            self._featuresMatrix = self._featuresMinMaxScaler.inverse_transform(self._featuresMatrix)
+            data.setX( self._featuresMinMaxScaler.inverse_transform(data.X()) )
             return
 
         raise Exception("Unknown scaling type, can't unscale features!")
 
 
-    def generatePolynomialFeatures (self, degree = 2):
+    def generatePolynomialFeatures (self, data, degree = 2):
 
         """
         Transforming features from (X1, X2) to (1, X1, X2, X1^2, X2^2, X1*X2)
@@ -686,52 +688,51 @@ class Loader:
         has no inverse transformation
         """
         #TODO
-        self.__checkFeatureMatrixAndLables__()
+        self.__checkFeatureMatrix__(data.X())
 
         print "[LOADER] creating polynomial features [degree: " + str(degree) + "]"
-
-        if not(_self.polynomialFeatures is None):
-            return
 
         if _self._polynomialFeaturesMaker is None:
             _self._polynomialFeaturesMaker = PolynomialFeatures(degree)
 
-        _self._polynomialFeaturesMaker.fit(self._featuresMatrix)
+        _self._polynomialFeaturesMaker.fit(data.X())
 
-        self._polynomialFeatures = _self._polynomialFeaturesMaker.transform(self._featuresMatrix)
+        data.setXpoly( _self._polynomialFeaturesMaker.transform(data.X()) )
 
 
-    def labelEncoding(self):
+    def labelEncoding(self, data):
         """
         from sklearn.preprocessing import LabelEncoder
         >> le=LabelEncoder()
         """
 
-        self.__checkFeatureMatrixAndLables__()
+        self.__checkFeatureMatrixAndLables__(data.X(), data.Y())
 
         print "[LOADER] perform label encoding"
 
-        if self._labelsEncoded:
+        if data.labelsEncoded():
             print "[LOADER] labels are already encoded"
             return
 
-        print self._featuresLabels
+        print data.Y()
 
         if self._labelsEncoder is None:
             self._labelsEncoder = preprocessing.LabelEncoder()
 
-        self._labelsEncoder.fit(self._featuresLabels)
+        self._labelsEncoder.fit(data.Y())
 
-        self._featuresLabels = self._labelsEncoder.transform(self._featuresLabels)
+        data.setY( self._labelsEncoder.transform(data.Y()) )
 
-        print self._featuresLabels
+        data.setLabelsEncoded(True)
+
+        print data.Y()
 
 
     def labelDecoding(self):
 
         print "[LOADER] perform label decoding"
 
-        if self._labelsEncoded:
+        if not data.labelsEncoded():
             print "[LABEL] labels are already decoded or are original"
             return
 
@@ -739,24 +740,27 @@ class Loader:
             print "[WARNING] label encoder is null, return original features"
             return
 
-        self._featuresLabels = self._labelsEncoder.inverse_transform(self._featuresLabels)
+        data.setY( self._labelsEncoder.inverse_transform(data.Y()) )
 
-    def performUnvariatefeatureSelection(self, mode="k_best", score_func_name="f_classif", k = 10):
+        data.setLabelsEncoded(False)
+
+
+    def performUnvariatefeatureSelection(self, data, mode="k_best", score_func_name="f_classif", k = 10):
         """
         mode = ["percentile", "k_best", "fpr", "fdr", "fwe"]
         score_func = ["chi2", "f_classif", "mutual_info_classif"]
         k - amount of features to leave
         """
 
-        self.__checkFeatureMatrixAndLables__()
+        self.__checkFeatureMatrixAndLables__(data.X(), data.Y())
 
         print "[LOADER] perform unvariate feature selction [score_func: " + score_func_name + ", k: " + str(k) + "]"
 
-        if self._featuresSelectorType == Loader.FeatureSelectionType.FST_GENERIC_UNIVARIATIVE:
+        if data.selectionType() == Loader.FeatureSelectionType.FST_GENERIC_UNIVARIATIVE:
             print "[WARNING] unvariate feature selction is already done, perform univariative inverse transorm"
-            self._featuresMatrix = self._genericUnivariateSelector.inverse_transform(self._featuresMatrix)
-        elif self._featuresSelectorType != Loader.FeatureSelectionType.FST_NONE:
-            raise Exception("Can't perform Univariative selection, feature selection '" + self.featureSelectorTypeToString() + "' is done")
+            data.setX( self._genericUnivariateSelector.inverse_transform(data.X()) )
+        elif data.selectionType() != Loader.FeatureSelectionType.FST_NONE:
+            raise Exception("Can't perform Univariative selection, feature selection '" + self.featureSelectorTypeToString(data.selectionType()) + "' is done")
 
         if not(mode in ["percentile", "k_best", "fpr", "fdr", "fwe"]):
             raise Exception("Unexpected mode for unvariate feature selection!")
@@ -779,7 +783,7 @@ class Loader:
             self._genericUnivariateSelector.set_params(score_func=score_func, mode="k_best", param=k)
 
         # непосредственно анализирует признаки и определяет их стоимости
-        self._genericUnivariateSelector.fit(self._featuresMatrix, self._featuresLabels)
+        self._genericUnivariateSelector.fit(data.X(), data.Y())
         # summarize scores
         numpy.set_printoptions(precision=3)
         # выводит стоимость каждого признака для принятия результата
@@ -787,14 +791,14 @@ class Loader:
 
         # применяет посичтанные стоимости к матрице признаков
         # summarize selected features
-        self._featuresMatrix = self._genericUnivariateSelector.transform(self._featuresMatrix)
-        print(self._featuresMatrix[0:5,:])
+        data.setX( self._genericUnivariateSelector.transform(data.X()) )
+        print data.X()[0:5,:]
 
         # setting class params
-        self._featuresSelectorType = Loader.FeatureSelectionType.FST_GENERIC_UNIVARIATIVE
+        data.setSelectionType(Loader.FeatureSelectionType.FST_GENERIC_UNIVARIATIVE)
 
 
-    def performRecursiveFeatureSelection(self, k = 10, step=1):
+    def performRecursiveFeatureSelection(self, data, k = 10, step=1):
         """
         k - amount of features to leave
         step - int or float, optional (default=1)
@@ -804,15 +808,15 @@ class Loader:
                (rounded down) of features to remove at each iteration.
         """
 
-        self.__checkFeatureMatrixAndLables__()
+        self.__checkFeatureMatrixAndLables__(data.X(), data.Y())
 
         print "[LOADER] perform recursive feature selction [step: " + str(step) + ", k: " + str(k) + "]"
 
-        if self._featuresSelectorType == Loader.FeatureSelectionType.FST_RECURSIVE:
+        if data.selectionType() == Loader.FeatureSelectionType.FST_RECURSIVE:
             print "[WARNING] recursive feature selection is already done, perform inverse rescursive transform"
-            self._featuresMatrix = self._recursiveSelector.inverse_transform(self._featuresMatrix)
-        elif self._featuresSelectorType != Loader.FeatureSelectionType.FST_NONE:
-            raise Exception("Can't perform recursive selection, feature selection '" + self.featureSelectorTypeToString() + "' is done")
+            data.setX( self._recursiveSelector.inverse_transform(data.X()) )
+        elif data.selectionType() != Loader.FeatureSelectionType.FST_NONE:
+            raise Exception("Can't perform recursive selection, feature selection '" + self.featureSelectorTypeToString(data.selectionType()) + "' is done")
 
         if self._recursiveSelector is None:
             svc = SVC(kernel="linear", C=1)
@@ -820,31 +824,31 @@ class Loader:
         else:
             self._recursiveSelector.set_params(n_features_to_select=k, step=step)
 
-        self._recursiveSelector.fit(self._featuresMatrix, self._featuresLabels)
+        self._recursiveSelector.fit(data.X(), data.Y())
         numpy.set_printoptions(precision=3)
 
         # ranking_ : array of shape [n_features]
         # The feature ranking, such that ranking_[i] corresponds to the ranking
         # position of the i-th feature. Selected (i.e., estimated best) features are assigned rank 1.
         print self._recursiveSelector.ranking_
-        self._featuresMatrix = self._recursiveSelector.transform(self._featuresMatrix)
-        print self._featuresMatrix
+        data.setX( self._recursiveSelector.transform(data.X()) )
+        print data.X()
 
         # setting class params
-        self._featuresSelectorType = Loader.FeatureSelectionType.FST_RECURSIVE
+        data.setSelectionType(Loader.FeatureSelectionType.FST_RECURSIVE)
 
 
-    def plotReducedFeatures(self):
+    def plotReducedFeatures(self, data):
 
-        self.__checkFeatureMatrixAndLables__()
+        self.__checkFeatureMatrixAndLables__(data.X(), data.Y())
 
         print "[LOADER] ploting features (dimension reduction - use PCA with n_components = 2)"
 
         pca = PCA(2)
-        fit = pca.fit(self._featuresMatrix)
-        features = fit.transform(self._featuresMatrix)
+        fit = pca.fit(data.X())
+        features = fit.transform(data.X())
 
-        self.labelEncoding()
+        self.labelEncoding(data)
 
         figure = plt.figure(figsize=(27, 9))
 
@@ -864,9 +868,9 @@ class Loader:
         # Plot the training points
 
         #ax.scatter(features[:, 0], features[:, 1], c=y_train, cmap=cm_bright)
-        for i in numpy.unique(self._featuresLabels):
+        for i in numpy.unique(data.Y()):
             print "class: " + str(i)
-            idx = numpy.where(self._featuresLabels == i)
+            idx = numpy.where(data.Y() == i)
             color=None
             if i == 0:
                 color='y'
@@ -888,9 +892,9 @@ class Loader:
 
         ax2 = plt.subplot(2, 1, 2)
         ax2.set_title("dataset centroids")
-        for i in numpy.unique(self._featuresLabels):
+        for i in numpy.unique(data.Y()):
             print "class: " + str(i)
-            idx = numpy.where(self._featuresLabels == i)
+            idx = numpy.where(data.Y() == i)
             print "idx"
             print idx[0]
             #print features[idx, :]
@@ -917,127 +921,125 @@ class Loader:
         plt.show()
 
 
-    def performPCAFeatureSelection(self, n_components = 3):
+    def performPCAFeatureSelection(self, data, n_components = 3):
 
-        self.__checkFeatureMatrixAndLables__()
+        self.__checkFeatureMatrixAndLables__(data.X(), data.Y())
 
         print "[LOADER] perform PCA feature selction [n_components: " + str(n_components) + "]"
 
-        if self._featuresSelectorType == Loader.FeatureSelectionType.FST_PCA:
+        if data.selectionType() == Loader.FeatureSelectionType.FST_PCA:
             print "[WARNING] PCA feature selction is already done, perform PCA inverse transorm"
-            self._featuresMatrix = self._PCASelector.inverse_transform(self._featuresMatrix)
-        elif self._featuresSelectorType != Loader.FeatureSelectionType.FST_NONE:
-            raise Exception("Can't perform PCA selection, feature selection '" + self.featureSelectorTypeToString() + "' is done")
+            data.setX( self._PCASelector.inverse_transform(data.X()) )
+        elif data.selectionType() != Loader.FeatureSelectionType.FST_NONE:
+            raise Exception("Can't perform PCA selection, feature selection '" + self.featureSelectorTypeToString(data.selectionType()) + "' is done")
 
         if self._PCASelector is None:
             self._PCASelector = PCA(n_components)
         else:
             self._PCASelector.set_params(n_components = n_components)
 
-        self._PCASelector.fit(self._featuresMatrix)
-        self._featuresMatrix = self._PCASelector.transform(self._featuresMatrix)
+        self._PCASelector.fit(data.X())
+        data.setX( self._PCASelector.transform(data.X()) )
 
         # summarize components
         print("[LABEL] PCA Explained Variance: %s") % self._PCASelector.explained_variance_ratio_
-        print(self._featuresMatrix[0:5,:])
+        print(data.X()[0:5,:])
 
         # setting class params
-        self._featuresSelectorType = Loader.FeatureSelectionType.FST_PCA
+        data.setSelectionType( Loader.FeatureSelectionType.FST_PCA )
 
 
-    def performL1BasedFeatureSelection(self, C=0.005):
+    def performL1BasedFeatureSelection(self, data, C=0.005):
         """
         C regulates feature count
         L1 - l1 norm
         """
 
-        self.__checkFeatureMatrixAndLables__()
+        self.__checkFeatureMatrixAndLables__(data.X(), data.Y())
 
         print "[LOADER] perform L1 based feature selction"
 
-        if self._featuresSelectorType == Loader.FeatureSelectionType.FST_L1BASED:
+        if data.selectionType() == Loader.FeatureSelectionType.FST_L1BASED:
             print "[WARNING] L1 Based feature selction is already done, perform L1 Based inverse transorm"
             return
             #self._featuresMatrix = self._PCASelector.inverse_transform(self._featuresMatrix)
-        elif self._featuresSelectorType != Loader.FeatureSelectionType.FST_NONE:
-            raise Exception("Can't perform L1 Based selection, feature selection '" + self.featureSelectorTypeToString() + "' is done")
+        elif data.selectionType() != Loader.FeatureSelectionType.FST_NONE:
+            raise Exception("Can't perform L1 Based selection, feature selection '" + self.featureSelectorTypeToString(data.selectionType()) + "' is done")
 
-        lsvc = LinearSVC(C=C, penalty="l1", dual=False).fit(self._featuresMatrix, self._featuresLabels)
+        lsvc = LinearSVC(C=C, penalty="l1", dual=False).fit(data.X(), data.Y())
         self._L1BasedSelector = SelectFromModel(lsvc, prefit=True)
 
-        self._featuresMatrix = self._L1BasedSelector.transform(self._featuresMatrix)
+        data.setX( self._L1BasedSelector.transform(data.X()) )
 
         # summarize components
-        print self._featuresMatrix.shape
-        print(self._featuresMatrix[0:5,:])
+        print data.X().shape
+        print(data.X()[0:5,:])
 
         # setting class params
-        self._featuresSelectorType = Loader.FeatureSelectionType.FST_L1BASED
+        data.setSelectionType( Loader.FeatureSelectionType.FST_L1BASED )
 
 
-    def performTreeBasedFeatureSelection(self):
+    def performTreeBasedFeatureSelection(self, data):
         """
         do not know how to regulate
         """
 
-        self.__checkFeatureMatrixAndLables__()
+        self.__checkFeatureMatrixAndLables__(data.X(), data.Y())
 
         print "[LOADER] perform Tree based feature selction"
 
-        if self._featuresSelectorType == Loader.FeatureSelectionType.FST_TREE_BASED:
+        if data.selectionType() == Loader.FeatureSelectionType.FST_TREE_BASED:
             print "[WARNING] Tree Based feature selction is already done, perform Tree Based inverse transorm"
             return
             #self._featuresMatrix = self._PCASelector.inverse_transform(self._featuresMatrix)
-        elif self._featuresSelectorType != Loader.FeatureSelectionType.FST_NONE:
-            raise Exception("Can't perform Tree Based selection, feature selection '" + self.featureSelectorTypeToString() + "' is done")
+        elif data.selectionType() != Loader.FeatureSelectionType.FST_NONE:
+            raise Exception("Can't perform Tree Based selection, feature selection '" + self.featureSelectorTypeToString(data.selectionType()) + "' is done")
 
         clf = ExtraTreesClassifier()
-        clf.fit(self._featuresMatrix, self._featuresLabels)
+        clf.fit(data.X(), data.Y())
         print "[LOADER] Tree based feature selection, feature importances: "
         print clf.feature_importances_
         self._treeBasedSelector = SelectFromModel(clf, prefit=True)
 
-        print self._featuresMatrix
+        print data.X()
 
-        self._featuresMatrix = self._treeBasedSelector.transform(self._featuresMatrix)
+        data.setX( self._treeBasedSelector.transform(data.X()) )
 
         # summarize components
-        print self._featuresMatrix.shape
-        print(self._featuresMatrix[0:5,:])
+        print data.X().shape
+        print(data.X()[0:5,:])
 
         # setting class params
-        self._featuresSelectorType = Loader.FeatureSelectionType.FST_TREE_BASED
-
-        print self._treeBasedSelector.inverse_transform(self._featuresMatrix)
+        data.setSelectionType(Loader.FeatureSelectionType.FST_TREE_BASED)
 
 
-    def makeOriginalFeaturesSetAfterFeatureSelection(self):
-        if self._featuresSelectorType == Loader.FeatureSelectionType.FST_NONE:
+    def makeOriginalFeaturesSetAfterFeatureSelection(self, data):
+        if data.selectionType() == Loader.FeatureSelectionType.FST_NONE:
             return
 
-        if self._featuresSelectorType == Loader.FeatureSelectionType.FST_GENERIC_UNIVARIATIVE:
+        if data.selectionType() == Loader.FeatureSelectionType.FST_GENERIC_UNIVARIATIVE:
             if not(self._genericUnivariateSelector is None):
-                self._featuresMatrix = self._genericUnivariateSelector.inverse_transform(self._featuresMatrix)
+                data.setX( self._genericUnivariateSelector.inverse_transform(data.X()) )
                 return
 
-        if self._featuresSelectorType == Loader.FeatureSelectionType.FST_RECURSIVE:
+        if data.selectionType() == Loader.FeatureSelectionType.FST_RECURSIVE:
             if not(self._recursiveSelector is None):
-                self._featuresMatrix = self._recursiveSelector.inverse_transform(self._featuresMatrix)
+                data.setX( self._recursiveSelector.inverse_transform(data.X()) )
                 return
 
-        if self._featuresSelectorType == Loader.FeatureSelectionType.FST_PCA:
+        if data.selectionType() == Loader.FeatureSelectionType.FST_PCA:
             if not(self._PCASelector is None):
-                self._featuresMatrix = self._PCASelector.inverse_transform(self._featuresMatrix)
+                data.setX( self._PCASelector.inverse_transform(data.X()) )
                 return
 
-        if self._featuresSelectorType == Loader.FeatureSelectionType.FST_L1BASED:
+        if data.selectionType() == Loader.FeatureSelectionType.FST_L1BASED:
             if not(self._L1BasedSelector is None):
-                self._featuresMatrix = self._L1BasedSelector.inverse_transform(self._featuresMatrix)
+                data.setX( self._L1BasedSelector.inverse_transform(data.X()) )
                 return
 
-        if self._featuresSelectorType == Loader.FeatureSelectionType.FST_TREE_BASED:
+        if data.selectionType() == Loader.FeatureSelectionType.FST_TREE_BASED:
             if not(self._treeBasedSelector is None):
-                self._featuresMatrix = self._treeBasedSelector.inverse_transform(self._featuresMatrix)
+                data.setX( self._treeBasedSelector.inverse_transform(data.X()) )
                 return
 
         # fall here if invalid type found or appropriate selector is None

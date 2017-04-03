@@ -56,7 +56,7 @@ def getResultProcess():
 def trainEmotionClassifier(file, data, load):
     config = Config.get_instance()
 
-    tmp = "calculated_essentia_features/all_dataset_for_counting/4_dataset_audio/GROUPED/train/"
+    tmp = "calculated_essentia_features/all_dataset_for_counting/4_dataset_audio/GROUPED/"
 
     ec = EmotionClassifier(storage, tmp)
 
@@ -67,9 +67,9 @@ def trainEmotionClassifier(file, data, load):
 
     ec.loadAudioFeaturesToMem()
 
-    ec.plotDataset()
+    #ec.plotDataset()
 
-    #ec.preprocessAudioFeatures()
+    ec.preprocessAudioFeatures()
 
 
 def convertDirMp3ToWavProcess(directory, sample_rate, _channels, need_remove_original = False, use_mp3_tags = False):

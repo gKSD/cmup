@@ -1,0 +1,10 @@
+{
+    "train": {
+                "qq1" : {"dirs": ["./input_data/test_dir1/darkwave"]}
+             },
+    "test": {
+                "tt" : {"dirs": ["./input_data/test_dir1/darkwave", "./input_data/test_dir1/deep_house"]},
+                "aa" : {}
+            },
+    "cv":{}
+}
