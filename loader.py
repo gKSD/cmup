@@ -948,6 +948,7 @@ class Loader:
     def performL1BasedFeatureSelection(self, C=0.005):
         """
         C regulates feature count
+        L1 - l1 norm
         """
 
         self.__checkFeatureMatrixAndLables__()
