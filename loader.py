@@ -97,6 +97,10 @@ class Loader:
         self._treeBasedSelector = None # using SelectFromModel
 
 
+    def labelsEncoder(self):
+        return self._labelsEncoder
+
+
     def scalingTypeToString(self, stype):
         if stype == Loader.ScalingType.ST_NONE:
             return "None"
@@ -636,8 +640,7 @@ class Loader:
 
         if self._featuresStandardScaler is None:
             self._featuresStandardScaler = preprocessing.StandardScaler()
-        
-        self._featuresStandardScaler.fit(data.X())
+            self._featuresStandardScaler.fit(data.X())
 
         print data.X()
         data.setX( self._featuresStandardScaler.transform(data.X()) )
@@ -694,8 +697,7 @@ class Loader:
 
         if _self._polynomialFeaturesMaker is None:
             _self._polynomialFeaturesMaker = PolynomialFeatures(degree)
-
-        _self._polynomialFeaturesMaker.fit(data.X())
+            _self._polynomialFeaturesMaker.fit(data.X())
 
         data.setXpoly( _self._polynomialFeaturesMaker.transform(data.X()) )
 
@@ -714,18 +716,17 @@ class Loader:
             print "[LOADER] labels are already encoded"
             return
 
-        print data.Y()
+        #print data.Y()
 
         if self._labelsEncoder is None:
             self._labelsEncoder = preprocessing.LabelEncoder()
-
-        self._labelsEncoder.fit(data.Y())
+            self._labelsEncoder.fit(data.Y())
 
         data.setY( self._labelsEncoder.transform(data.Y()) )
 
         data.setLabelsEncoded(True)
 
-        print data.Y()
+        #print data.Y()
 
 
     def labelDecoding(self):
@@ -779,11 +780,11 @@ class Loader:
         if self._genericUnivariateSelector is None:
             #selector = SelectKBest(score_func, k)
             self._genericUnivariateSelector = GenericUnivariateSelect(score_func, "k_best", k)
-        else:
-            self._genericUnivariateSelector.set_params(score_func=score_func, mode="k_best", param=k)
+        #else:
+            #self._genericUnivariateSelector.set_params(score_func=score_func, mode="k_best", param=k)
+            # непосредственно анализирует признаки и определяет их стоимости
+            self._genericUnivariateSelector.fit(data.X(), data.Y())
 
-        # непосредственно анализирует признаки и определяет их стоимости
-        self._genericUnivariateSelector.fit(data.X(), data.Y())
         # summarize scores
         numpy.set_printoptions(precision=3)
         # выводит стоимость каждого признака для принятия результата
@@ -821,10 +822,10 @@ class Loader:
         if self._recursiveSelector is None:
             svc = SVC(kernel="linear", C=1)
             self._recursiveSelector = RFE(estimator=svc, n_features_to_select=k, step=step, verbose=1)
-        else:
-            self._recursiveSelector.set_params(n_features_to_select=k, step=step)
+        #else:
+        #    self._recursiveSelector.set_params(n_features_to_select=k, step=step)
+            self._recursiveSelector.fit(data.X(), data.Y())
 
-        self._recursiveSelector.fit(data.X(), data.Y())
         numpy.set_printoptions(precision=3)
 
         # ranking_ : array of shape [n_features]
@@ -935,10 +936,10 @@ class Loader:
 
         if self._PCASelector is None:
             self._PCASelector = PCA(n_components)
-        else:
-            self._PCASelector.set_params(n_components = n_components)
+        #else:
+        #    self._PCASelector.set_params(n_components = n_components)
+            self._PCASelector.fit(data.X())
 
-        self._PCASelector.fit(data.X())
         data.setX( self._PCASelector.transform(data.X()) )
 
         # summarize components

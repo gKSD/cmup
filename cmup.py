@@ -71,6 +71,12 @@ def trainEmotionClassifier(file, data, load):
 
     ec.preprocessAudioFeatures()
 
+    #ec.trainTunnedSVC()
+    #ec.trainAndPlotSVC('svc_object.pkl', False)
+
+    ec.trainTunnedKNeighbors()
+    #ec.trainAndPlotkNeighbors()
+
 
 def convertDirMp3ToWavProcess(directory, sample_rate, _channels, need_remove_original = False, use_mp3_tags = False):
     config = Config.get_instance()

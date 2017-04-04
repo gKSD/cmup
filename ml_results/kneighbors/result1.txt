@@ -1,0 +1,283 @@
+➜  cmup git:(master) ✗ ./cmup.py trainEmotionClassifier --load
+[CONFIG] reading config: './conf/cmup_conf.cfg'
+[CLASSIFIER] loading train data
+[LOADER] label: Angry_all
+[LOADER] n features: 160
+[LOADER] m samples: 507
+[LOADER] label: Happy_all
+[LOADER] n features: 160
+[LOADER] m samples: 584
+[LOADER] label: Relax_all
+[LOADER] n features: 160
+[LOADER] m samples: 584
+[LOADER] label: Sad_all
+[LOADER] n features: 160
+[LOADER] m samples: 597
+[LOADER] making feature matrix and feature labels vector
+[LOADER] feature matrix shape: 2272 x 160
+[LOADER] feature labels shape: 2272
+[CLASSIFIER] train data shape
+(2272, 160)
+[CLASSIFIER] loading test data
+[LOADER] label: Angry_all
+[LOADER] n features: 160
+[LOADER] m samples: 126
+[LOADER] label: Happy_all
+[LOADER] n features: 160
+[LOADER] m samples: 146
+[LOADER] label: Relax_all
+[LOADER] n features: 160
+[LOADER] m samples: 146
+[LOADER] label: Sad_all
+[LOADER] n features: 160
+[LOADER] m samples: 149
+[LOADER] making feature matrix and feature labels vector
+[LOADER] feature matrix shape: 567 x 160
+[LOADER] feature labels shape: 567
+[CLASSIFIER] test data shape
+(567, 160)
+[LOADER] perform feature standartization (using sklearn.preprocessing.StandardScaler class)
+[[  78.3966217    36.00850677    0.97978675 ...,    2.79889989    0.          101.        ]
+ [ 120.2877655    11.91337967    0.96864593 ...,    3.96510816    0.           89.        ]
+ [ 104.6809082    18.70925331    0.93943554 ...,    4.26911879    0.          126.        ]
+ ..., 
+ [  23.54691124   11.5001936     0.87458295 ...,    4.20241404    0.           98.        ]
+ [  48.5058136    21.2920208     0.96427035 ...,    2.93672514    0.          157.        ]
+ [ 110.03178406   15.44882202    0.63834012 ...,    3.39472437    0.          144.        ]]
+[[-0.08256581  2.14064642  0.56590879 ..., -0.70583633  0.         -0.88586098]
+ [ 0.66968071 -0.80162041  0.49203325 ...,  0.42101711  0.         -1.36385563]
+ [ 0.38942567  0.02822678  0.29833724 ...,  0.7147686   0.          0.10996121]
+ ..., 
+ [-1.06751155 -0.85207475 -0.1317046  ...,  0.65031487  0.         -1.00535964]
+ [-0.61932022  0.34360968  0.46301851 ..., -0.57266213  0.          1.34478073]
+ [ 0.48551228 -0.36990595 -1.6982464  ..., -0.13011852  0.          0.82695319]]
+[LOADER] perform feature standartization (using sklearn.preprocessing.StandardScaler class)
+[[  44.66075897   11.60788822    0.97211963 ...,    5.06467581    0.          157.        ]
+ [  30.50131989   12.40735054    0.68405718 ...,    2.08291769    0.           99.        ]
+ [   6.62777519    8.3523035     0.67839611 ...,    2.05117822    0.           99.        ]
+ ..., 
+ [  59.63494492   11.99690628    0.94270056 ...,    4.19834995    0.          161.        ]
+ [  17.15740776   14.6537571     0.96147597 ...,    1.36824691    0.          129.        ]
+ [  68.04239655   18.75434494    0.97158396 ...,    2.94542265    0.          129.        ]]
+[[-0.68836653 -0.83892411  0.51506758 ...,  1.48347878  0.          1.34478073]
+ [-0.94263003 -0.74130141 -1.39509355 ..., -1.39765701  0.         -0.96552676]
+ [-1.3713314  -1.23646503 -1.43263248 ..., -1.42832541  0.         -0.96552676]
+ ..., 
+ [-0.41947248 -0.79142094  0.31998782 ...,  0.64638793  0.          1.50411228]
+ [-1.18224897 -0.46699169  0.44448876 ..., -2.08821053  0.          0.22945987]
+ [-0.26849842  0.03373294  0.51151554 ..., -0.56425812  0.          0.22945987]]
+[LOADER] perform PCA feature selction [n_components: 2]
+[LABEL] PCA Explained Variance: [ 0.12303868  0.08240316]
+[[ -5.78645904  -1.81073625]
+ [  0.34433207   2.52820966]
+ [ -2.54943834   5.38101291]
+ [ 12.66623277   0.77824496]
+ [  2.72758167  -3.20388756]]
+[LOADER] perform PCA feature selction [n_components: 2]
+[LABEL] PCA Explained Variance: [ 0.12303868  0.08240316]
+[[  4.44901481e+00  -1.26022474e-03]
+ [  3.65271563e+00  -6.73073334e-01]
+ [  1.29298128e+01  -5.95782474e+00]
+ [  5.36757236e+00   5.50387265e+00]
+ [ -1.23197803e+00  -6.48413109e+00]]
+[LOADER] perform label encoding
+[LOADER] perform label encoding
+# Tuning hyper-parameters for precision
+()
+Best parameters set found on development set:
+()
+{'n_neighbors': 45, 'metric': 'manhattan', 'weights': 'uniform'}
+()
+Grid scores on development set:
+()
+0.385 (+/-0.026) for {'n_neighbors': 3, 'metric': 'minkowski', 'weights': 'uniform'}
+0.392 (+/-0.053) for {'n_neighbors': 3, 'metric': 'minkowski', 'weights': 'distance'}
+0.415 (+/-0.047) for {'n_neighbors': 15, 'metric': 'minkowski', 'weights': 'uniform'}
+0.420 (+/-0.060) for {'n_neighbors': 15, 'metric': 'minkowski', 'weights': 'distance'}
+0.435 (+/-0.057) for {'n_neighbors': 25, 'metric': 'minkowski', 'weights': 'uniform'}
+0.421 (+/-0.066) for {'n_neighbors': 25, 'metric': 'minkowski', 'weights': 'distance'}
+0.432 (+/-0.042) for {'n_neighbors': 30, 'metric': 'minkowski', 'weights': 'uniform'}
+0.430 (+/-0.048) for {'n_neighbors': 30, 'metric': 'minkowski', 'weights': 'distance'}
+0.439 (+/-0.052) for {'n_neighbors': 35, 'metric': 'minkowski', 'weights': 'uniform'}
+0.432 (+/-0.047) for {'n_neighbors': 35, 'metric': 'minkowski', 'weights': 'distance'}
+0.438 (+/-0.048) for {'n_neighbors': 40, 'metric': 'minkowski', 'weights': 'uniform'}
+0.434 (+/-0.038) for {'n_neighbors': 40, 'metric': 'minkowski', 'weights': 'distance'}
+0.445 (+/-0.050) for {'n_neighbors': 45, 'metric': 'minkowski', 'weights': 'uniform'}
+0.437 (+/-0.044) for {'n_neighbors': 45, 'metric': 'minkowski', 'weights': 'distance'}
+0.385 (+/-0.026) for {'n_neighbors': 3, 'metric': 'euclidean', 'weights': 'uniform'}
+0.392 (+/-0.053) for {'n_neighbors': 3, 'metric': 'euclidean', 'weights': 'distance'}
+0.415 (+/-0.047) for {'n_neighbors': 15, 'metric': 'euclidean', 'weights': 'uniform'}
+0.420 (+/-0.060) for {'n_neighbors': 15, 'metric': 'euclidean', 'weights': 'distance'}
+0.435 (+/-0.057) for {'n_neighbors': 25, 'metric': 'euclidean', 'weights': 'uniform'}
+0.421 (+/-0.066) for {'n_neighbors': 25, 'metric': 'euclidean', 'weights': 'distance'}
+0.432 (+/-0.042) for {'n_neighbors': 30, 'metric': 'euclidean', 'weights': 'uniform'}
+0.430 (+/-0.048) for {'n_neighbors': 30, 'metric': 'euclidean', 'weights': 'distance'}
+0.439 (+/-0.052) for {'n_neighbors': 35, 'metric': 'euclidean', 'weights': 'uniform'}
+0.432 (+/-0.047) for {'n_neighbors': 35, 'metric': 'euclidean', 'weights': 'distance'}
+0.438 (+/-0.048) for {'n_neighbors': 40, 'metric': 'euclidean', 'weights': 'uniform'}
+0.434 (+/-0.038) for {'n_neighbors': 40, 'metric': 'euclidean', 'weights': 'distance'}
+0.445 (+/-0.050) for {'n_neighbors': 45, 'metric': 'euclidean', 'weights': 'uniform'}
+0.437 (+/-0.044) for {'n_neighbors': 45, 'metric': 'euclidean', 'weights': 'distance'}
+0.382 (+/-0.027) for {'n_neighbors': 3, 'metric': 'manhattan', 'weights': 'uniform'}
+0.397 (+/-0.041) for {'n_neighbors': 3, 'metric': 'manhattan', 'weights': 'distance'}
+0.402 (+/-0.036) for {'n_neighbors': 15, 'metric': 'manhattan', 'weights': 'uniform'}
+0.412 (+/-0.063) for {'n_neighbors': 15, 'metric': 'manhattan', 'weights': 'distance'}
+0.430 (+/-0.041) for {'n_neighbors': 25, 'metric': 'manhattan', 'weights': 'uniform'}
+0.425 (+/-0.050) for {'n_neighbors': 25, 'metric': 'manhattan', 'weights': 'distance'}
+0.427 (+/-0.054) for {'n_neighbors': 30, 'metric': 'manhattan', 'weights': 'uniform'}
+0.422 (+/-0.060) for {'n_neighbors': 30, 'metric': 'manhattan', 'weights': 'distance'}
+0.437 (+/-0.050) for {'n_neighbors': 35, 'metric': 'manhattan', 'weights': 'uniform'}
+0.424 (+/-0.051) for {'n_neighbors': 35, 'metric': 'manhattan', 'weights': 'distance'}
+0.445 (+/-0.053) for {'n_neighbors': 40, 'metric': 'manhattan', 'weights': 'uniform'}
+0.432 (+/-0.038) for {'n_neighbors': 40, 'metric': 'manhattan', 'weights': 'distance'}
+0.451 (+/-0.059) for {'n_neighbors': 45, 'metric': 'manhattan', 'weights': 'uniform'}
+0.435 (+/-0.045) for {'n_neighbors': 45, 'metric': 'manhattan', 'weights': 'distance'}
+()
+Detailed classification report:
+()
+The model is trained on the full development set.
+The scores are computed on the full evaluation set.
+()
+             precision    recall  f1-score   support
+
+          0       0.62      0.57      0.59       126
+          1       0.42      0.51      0.46       146
+          2       0.43      0.38      0.40       146
+          3       0.40      0.38      0.39       149
+
+avg / total       0.46      0.46      0.46       567
+
+()
+# Tuning hyper-parameters for recall
+()
+Best parameters set found on development set:
+()
+{'n_neighbors': 45, 'metric': 'manhattan', 'weights': 'uniform'}
+()
+Grid scores on development set:
+()
+0.388 (+/-0.029) for {'n_neighbors': 3, 'metric': 'minkowski', 'weights': 'uniform'}
+0.392 (+/-0.053) for {'n_neighbors': 3, 'metric': 'minkowski', 'weights': 'distance'}
+0.416 (+/-0.053) for {'n_neighbors': 15, 'metric': 'minkowski', 'weights': 'uniform'}
+0.418 (+/-0.063) for {'n_neighbors': 15, 'metric': 'minkowski', 'weights': 'distance'}
+0.429 (+/-0.060) for {'n_neighbors': 25, 'metric': 'minkowski', 'weights': 'uniform'}
+0.419 (+/-0.071) for {'n_neighbors': 25, 'metric': 'minkowski', 'weights': 'distance'}
+0.427 (+/-0.047) for {'n_neighbors': 30, 'metric': 'minkowski', 'weights': 'uniform'}
+0.426 (+/-0.054) for {'n_neighbors': 30, 'metric': 'minkowski', 'weights': 'distance'}
+0.431 (+/-0.060) for {'n_neighbors': 35, 'metric': 'minkowski', 'weights': 'uniform'}
+0.427 (+/-0.055) for {'n_neighbors': 35, 'metric': 'minkowski', 'weights': 'distance'}
+0.427 (+/-0.053) for {'n_neighbors': 40, 'metric': 'minkowski', 'weights': 'uniform'}
+0.428 (+/-0.046) for {'n_neighbors': 40, 'metric': 'minkowski', 'weights': 'distance'}
+0.432 (+/-0.054) for {'n_neighbors': 45, 'metric': 'minkowski', 'weights': 'uniform'}
+0.430 (+/-0.051) for {'n_neighbors': 45, 'metric': 'minkowski', 'weights': 'distance'}
+0.388 (+/-0.029) for {'n_neighbors': 3, 'metric': 'euclidean', 'weights': 'uniform'}
+0.392 (+/-0.053) for {'n_neighbors': 3, 'metric': 'euclidean', 'weights': 'distance'}
+0.416 (+/-0.053) for {'n_neighbors': 15, 'metric': 'euclidean', 'weights': 'uniform'}
+0.418 (+/-0.063) for {'n_neighbors': 15, 'metric': 'euclidean', 'weights': 'distance'}
+0.429 (+/-0.060) for {'n_neighbors': 25, 'metric': 'euclidean', 'weights': 'uniform'}
+0.419 (+/-0.071) for {'n_neighbors': 25, 'metric': 'euclidean', 'weights': 'distance'}
+0.427 (+/-0.047) for {'n_neighbors': 30, 'metric': 'euclidean', 'weights': 'uniform'}
+0.426 (+/-0.054) for {'n_neighbors': 30, 'metric': 'euclidean', 'weights': 'distance'}
+0.431 (+/-0.060) for {'n_neighbors': 35, 'metric': 'euclidean', 'weights': 'uniform'}
+0.427 (+/-0.055) for {'n_neighbors': 35, 'metric': 'euclidean', 'weights': 'distance'}
+0.427 (+/-0.053) for {'n_neighbors': 40, 'metric': 'euclidean', 'weights': 'uniform'}
+0.428 (+/-0.046) for {'n_neighbors': 40, 'metric': 'euclidean', 'weights': 'distance'}
+0.432 (+/-0.054) for {'n_neighbors': 45, 'metric': 'euclidean', 'weights': 'uniform'}
+0.430 (+/-0.051) for {'n_neighbors': 45, 'metric': 'euclidean', 'weights': 'distance'}
+0.384 (+/-0.030) for {'n_neighbors': 3, 'metric': 'manhattan', 'weights': 'uniform'}
+0.396 (+/-0.041) for {'n_neighbors': 3, 'metric': 'manhattan', 'weights': 'distance'}
+0.403 (+/-0.041) for {'n_neighbors': 15, 'metric': 'manhattan', 'weights': 'uniform'}
+0.410 (+/-0.067) for {'n_neighbors': 15, 'metric': 'manhattan', 'weights': 'distance'}
+0.424 (+/-0.045) for {'n_neighbors': 25, 'metric': 'manhattan', 'weights': 'uniform'}
+0.421 (+/-0.054) for {'n_neighbors': 25, 'metric': 'manhattan', 'weights': 'distance'}
+0.420 (+/-0.058) for {'n_neighbors': 30, 'metric': 'manhattan', 'weights': 'uniform'}
+0.417 (+/-0.063) for {'n_neighbors': 30, 'metric': 'manhattan', 'weights': 'distance'}
+0.428 (+/-0.059) for {'n_neighbors': 35, 'metric': 'manhattan', 'weights': 'uniform'}
+0.419 (+/-0.059) for {'n_neighbors': 35, 'metric': 'manhattan', 'weights': 'distance'}
+0.435 (+/-0.060) for {'n_neighbors': 40, 'metric': 'manhattan', 'weights': 'uniform'}
+0.426 (+/-0.046) for {'n_neighbors': 40, 'metric': 'manhattan', 'weights': 'distance'}
+0.441 (+/-0.062) for {'n_neighbors': 45, 'metric': 'manhattan', 'weights': 'uniform'}
+0.429 (+/-0.053) for {'n_neighbors': 45, 'metric': 'manhattan', 'weights': 'distance'}
+()
+Detailed classification report:
+()
+The model is trained on the full development set.
+The scores are computed on the full evaluation set.
+()
+             precision    recall  f1-score   support
+
+          0       0.62      0.57      0.59       126
+          1       0.42      0.51      0.46       146
+          2       0.43      0.38      0.40       146
+          3       0.40      0.38      0.39       149
+
+avg / total       0.46      0.46      0.46       567
+
+()
+# Tuning hyper-parameters for f1
+()
+Best parameters set found on development set:
+()
+{'n_neighbors': 45, 'metric': 'manhattan', 'weights': 'uniform'}
+()
+Grid scores on development set:
+()
+0.378 (+/-0.026) for {'n_neighbors': 3, 'metric': 'minkowski', 'weights': 'uniform'}
+0.392 (+/-0.053) for {'n_neighbors': 3, 'metric': 'minkowski', 'weights': 'distance'}
+0.412 (+/-0.052) for {'n_neighbors': 15, 'metric': 'minkowski', 'weights': 'uniform'}
+0.417 (+/-0.062) for {'n_neighbors': 15, 'metric': 'minkowski', 'weights': 'distance'}
+0.428 (+/-0.059) for {'n_neighbors': 25, 'metric': 'minkowski', 'weights': 'uniform'}
+0.418 (+/-0.070) for {'n_neighbors': 25, 'metric': 'minkowski', 'weights': 'distance'}
+0.426 (+/-0.047) for {'n_neighbors': 30, 'metric': 'minkowski', 'weights': 'uniform'}
+0.426 (+/-0.053) for {'n_neighbors': 30, 'metric': 'minkowski', 'weights': 'distance'}
+0.431 (+/-0.059) for {'n_neighbors': 35, 'metric': 'minkowski', 'weights': 'uniform'}
+0.427 (+/-0.053) for {'n_neighbors': 35, 'metric': 'minkowski', 'weights': 'distance'}
+0.428 (+/-0.051) for {'n_neighbors': 40, 'metric': 'minkowski', 'weights': 'uniform'}
+0.428 (+/-0.045) for {'n_neighbors': 40, 'metric': 'minkowski', 'weights': 'distance'}
+0.432 (+/-0.052) for {'n_neighbors': 45, 'metric': 'minkowski', 'weights': 'uniform'}
+0.431 (+/-0.051) for {'n_neighbors': 45, 'metric': 'minkowski', 'weights': 'distance'}
+0.378 (+/-0.026) for {'n_neighbors': 3, 'metric': 'euclidean', 'weights': 'uniform'}
+0.392 (+/-0.053) for {'n_neighbors': 3, 'metric': 'euclidean', 'weights': 'distance'}
+0.412 (+/-0.052) for {'n_neighbors': 15, 'metric': 'euclidean', 'weights': 'uniform'}
+0.417 (+/-0.062) for {'n_neighbors': 15, 'metric': 'euclidean', 'weights': 'distance'}
+0.428 (+/-0.059) for {'n_neighbors': 25, 'metric': 'euclidean', 'weights': 'uniform'}
+0.418 (+/-0.070) for {'n_neighbors': 25, 'metric': 'euclidean', 'weights': 'distance'}
+0.426 (+/-0.047) for {'n_neighbors': 30, 'metric': 'euclidean', 'weights': 'uniform'}
+0.426 (+/-0.053) for {'n_neighbors': 30, 'metric': 'euclidean', 'weights': 'distance'}
+0.431 (+/-0.059) for {'n_neighbors': 35, 'metric': 'euclidean', 'weights': 'uniform'}
+0.427 (+/-0.053) for {'n_neighbors': 35, 'metric': 'euclidean', 'weights': 'distance'}
+0.428 (+/-0.051) for {'n_neighbors': 40, 'metric': 'euclidean', 'weights': 'uniform'}
+0.428 (+/-0.045) for {'n_neighbors': 40, 'metric': 'euclidean', 'weights': 'distance'}
+0.432 (+/-0.052) for {'n_neighbors': 45, 'metric': 'euclidean', 'weights': 'uniform'}
+0.431 (+/-0.051) for {'n_neighbors': 45, 'metric': 'euclidean', 'weights': 'distance'}
+0.375 (+/-0.027) for {'n_neighbors': 3, 'metric': 'manhattan', 'weights': 'uniform'}
+0.396 (+/-0.041) for {'n_neighbors': 3, 'metric': 'manhattan', 'weights': 'distance'}
+0.400 (+/-0.039) for {'n_neighbors': 15, 'metric': 'manhattan', 'weights': 'uniform'}
+0.409 (+/-0.066) for {'n_neighbors': 15, 'metric': 'manhattan', 'weights': 'distance'}
+0.423 (+/-0.044) for {'n_neighbors': 25, 'metric': 'manhattan', 'weights': 'uniform'}
+0.421 (+/-0.054) for {'n_neighbors': 25, 'metric': 'manhattan', 'weights': 'distance'}
+0.420 (+/-0.057) for {'n_neighbors': 30, 'metric': 'manhattan', 'weights': 'uniform'}
+0.417 (+/-0.064) for {'n_neighbors': 30, 'metric': 'manhattan', 'weights': 'distance'}
+0.428 (+/-0.058) for {'n_neighbors': 35, 'metric': 'manhattan', 'weights': 'uniform'}
+0.419 (+/-0.058) for {'n_neighbors': 35, 'metric': 'manhattan', 'weights': 'distance'}
+0.436 (+/-0.059) for {'n_neighbors': 40, 'metric': 'manhattan', 'weights': 'uniform'}
+0.426 (+/-0.045) for {'n_neighbors': 40, 'metric': 'manhattan', 'weights': 'distance'}
+0.441 (+/-0.063) for {'n_neighbors': 45, 'metric': 'manhattan', 'weights': 'uniform'}
+0.429 (+/-0.052) for {'n_neighbors': 45, 'metric': 'manhattan', 'weights': 'distance'}
+()
+Detailed classification report:
+()
+The model is trained on the full development set.
+The scores are computed on the full evaluation set.
+()
+             precision    recall  f1-score   support
+
+          0       0.62      0.57      0.59       126
+          1       0.42      0.51      0.46       146
+          2       0.43      0.38      0.40       146
+          3       0.40      0.38      0.39       149
+
+avg / total       0.46      0.46      0.46       567
+
+()
+➜  cmup git:(master) ✗
